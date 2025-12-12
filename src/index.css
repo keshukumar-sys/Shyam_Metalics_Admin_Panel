@@ -1,0 +1,98 @@
+/* Global styles for the admin panel */
+
+:root{
+	--bg: #f6f7fb;
+	--card: #ffffff;
+	--muted: #6b7280;
+	--accent: #0ea5a4; /* teal */
+	--accent-600: #089995;
+	--text: #111827;
+	--border: #e6e9ef;
+	--radius: 8px;
+}
+
+*{box-sizing:border-box}
+html,body,#root{height:100%}
+body{
+	margin:0;
+	background:var(--bg);
+	color:var(--text);
+	font-family:Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+	-webkit-font-smoothing:antialiased;
+	-moz-osx-font-smoothing:grayscale;
+	line-height:1.45;
+}
+
+main{padding:24px;min-height:calc(100vh - 64px)}
+
+/* container used by pages */
+.container{
+	max-width:1100px;
+	margin:0 auto;
+}
+
+/* Card */
+.card{
+	background:var(--card);
+	border:1px solid var(--border);
+	border-radius:var(--radius);
+	padding:16px;
+	box-shadow:0 8px 20px rgba(16,24,40,0.04);
+}
+
+/* Headings */
+h2{margin:0 0 12px 0;font-size:20px}
+h3{margin:8px 0 12px 0;font-size:16px;color:var(--muted)}
+
+/* Forms */
+form{background:transparent}
+/* center forms horizontally and give a comfortable max width */
+form{max-width:720px;margin:48px auto;padding:12px}
+label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+input[type="text"], input[type="date"], select, textarea{
+	width:100%;
+	padding:10px 12px;
+	border-radius:6px;
+	border:1px solid var(--border);
+	background: #fff;
+	outline:none;
+	font-size:14px;
+	color:var(--text);
+}
+input[type="file"]{padding:6px}
+textarea{min-height:100px}
+
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media (max-width:720px){.form-row{grid-template-columns:1fr}}
+
+button{
+	background:var(--accent);
+	border:none;
+	color:white;
+	padding:10px 14px;
+	border-radius:6px;
+	cursor:pointer;
+	font-weight:600;
+}
+button[disabled]{opacity:0.6;cursor:not-allowed}
+
+.muted{color:var(--muted)}
+
+/* Lists */
+ul{padding-left:18px}
+li{margin-bottom:8px}
+
+.card-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+.card-item{background:var(--card);border:1px solid var(--border);padding:12px;border-radius:8px}
+
+/* Fieldset */
+fieldset{border:1px dashed var(--border);Padding:10px;border-radius:6px}
+
+.page-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+
+.notice{background:#fff8e6;border:1px solid #ffecb5;padding:8px;border-radius:6px;color:#6b4500}
+
+/* Navbar tweaks to match new theme */
+.navbar{background:linear-gradient(90deg,#ffffff,#f8fafc);padding:14px 18px;border-bottom:1px solid var(--border)}
+.nav-links a{color:var(--text);text-decoration:none;padding:6px 8px;border-radius:6px}
+.nav-links a:hover{background:#eef2f7}
