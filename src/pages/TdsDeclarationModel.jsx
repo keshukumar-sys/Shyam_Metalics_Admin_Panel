@@ -42,9 +42,6 @@ export default function TdsDeclarationModel() {
       formData.append("tds_date", tdsDate);
       // append the file under the expected field name
       formData.append("tds_file", file);
-      // also include the original filename under a separate key
-      formData.append("tds_file_name", file.name);
-
       const res = await fetch(`${API_BASE}/create_tds`, {
         method: "POST",
         body: formData,
