@@ -69,6 +69,7 @@ export default function OtherModel() {
       console.log(await res.json());
     } catch (err) {
       console.error(err);
+      console.log("Error submitting contact details");
     }
   };
 
