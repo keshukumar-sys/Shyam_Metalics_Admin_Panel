@@ -1,8 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 export default function OtherModel() {
   const [option, setOption] = useState("");
   const [file, setFile] = useState(null);
+  const [uploading, setUploading] = useState(false);
 
   const [details, setDetails] = useState({
     name: "",
@@ -23,10 +24,30 @@ export default function OtherModel() {
     import.meta.env.VITE_API_BASE || "http://localhost:3002"
   }/other`;
 
+  const [list, setList] = useState([]);
+
+  useEffect(() => {
+    fetchList();
+  }, []);
+
+  const fetchList = async () => {
+    try {
+      const res = await fetch(`${API_BASE}/get_other`);
+      if (!res.ok) throw new Error("Failed to fetch items");
+      const json = await res.json();
+      // backend may return { data: [...] } or an array directly
+      setList(json.data || json || []);
+    } catch (err) {
+      console.error(err);
+      setList([]);
+    }
+  };
+
   // ------------------ SUBMIT FOR OTHER COMPLIANCES ------------------
   const handleOtherComplianceSubmit = async (e) => {
     e.preventDefault();
 
+    setUploading(true);
     try {
       const formData = new FormData();
       formData.append("option", option);
@@ -38,9 +59,14 @@ export default function OtherModel() {
         body: formData,
       });
 
-      console.log(await res.json());
+      const result = await res.json();
+      console.log(result);
+      // refresh list after successful upload
+      if (res.ok) fetchList();
     } catch (err) {
       console.error(err);
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -66,7 +92,9 @@ export default function OtherModel() {
         body: JSON.stringify(payload),
       });
 
-      console.log(await res.json());
+      const result = await res.json();
+      console.log(result);
+      if (res.ok) fetchList();
     } catch (err) {
       console.error(err);
       console.log("Error submitting contact details");
@@ -103,9 +131,45 @@ export default function OtherModel() {
 
           <input type="file" onChange={(e) => setFile(e.target.files[0])} />
 
-          <button type="submit">Submit</button>
+          <button type="submit" disabled={uploading}>{uploading ? "Uploading..." : "Submit"}</button>
         </form>
       )}
+
+      {/* ========================= LIST OF ITEMS ========================= */}
+      <section style={{ marginTop: 24 }}>
+        <h3>Items</h3>
+        {list.length === 0 && <div>No records found</div>}
+        <ul>
+          {list.map((item, idx) => {
+            // try to read common shapes coming from backend
+            const optionLabel = item.option || item.type || "Other";
+            const detailsObj =
+              item.details || (item.details && item.details[0]) || item;
+            const fileUrl = item.file || item.other_file || item.file_url || item.filepath;
+
+            return (
+              <li key={item._id || idx} style={{ marginBottom: 12 }}>
+                <div>
+                  <strong>{optionLabel}</strong>
+                </div>
+                <div>
+                  {detailsObj && typeof detailsObj === "object"
+                    ? JSON.stringify(detailsObj)
+                    : detailsObj}
+                </div>
+                {item.date && <div>{new Date(item.date).toLocaleDateString()}</div>}
+                {fileUrl && (
+                  <div>
+                    <a href={fileUrl} target="_blank" rel="noreferrer">
+                      View file
+                    </a>
+                  </div>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </section>
 
       {/* ========================= FORM 2: CONTACT DETAILS ========================= */}
       {(option === "KMP Contact Details" ||

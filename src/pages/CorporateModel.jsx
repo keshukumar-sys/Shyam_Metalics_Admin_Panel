@@ -7,6 +7,7 @@ export default function CorporateModel() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [list, setList] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const API_BASE = `${
     import.meta.env.VITE_API_BASE || "http://localhost:3002"
@@ -38,6 +39,8 @@ export default function CorporateModel() {
       return;
     }
 
+    setUploading(true);
+
     try {
       const formData = new FormData();
       formData.append("option", option);
@@ -64,6 +67,8 @@ export default function CorporateModel() {
     } catch (err) {
       console.error(err);
       setMessage("Server error");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -115,7 +120,7 @@ export default function CorporateModel() {
           />
         </label>
 
-        <button type="submit">Add announcement</button>
+        <button type="submit" disabled={uploading}>{uploading ? "Uploading..." : "Add announcement"}</button>
         {message && <div>{message}</div>}
       </form>
 

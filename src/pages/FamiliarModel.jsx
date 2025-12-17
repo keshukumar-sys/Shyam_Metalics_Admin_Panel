@@ -6,6 +6,7 @@ export default function FamiliarModel() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [list, setList] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/familiar`;
 
@@ -34,6 +35,8 @@ export default function FamiliarModel() {
       return;
     }
 
+    setUploading(true);
+
     try {
       const formData = new FormData();
       formData.append("familiar_name", name);
@@ -59,6 +62,8 @@ export default function FamiliarModel() {
     } catch (err) {
       console.error(err);
       setMessage("Server error");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -82,7 +87,7 @@ export default function FamiliarModel() {
           <input type="file" onChange={(e) => setFile(e.target.files && e.target.files[0])} />
         </label>
 
-        <button type="submit">Add Familiar</button>
+        <button type="submit" disabled={uploading}>{uploading ? "Uploading..." : "Add Familiar"}</button>
         {message && <div>{message}</div>}
       </form>
 

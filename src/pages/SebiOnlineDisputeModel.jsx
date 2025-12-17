@@ -6,6 +6,7 @@ export default function SebiOnlineDisputeModel() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [list, setList] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/sebi`;
 
@@ -34,6 +35,8 @@ export default function SebiOnlineDisputeModel() {
       return;
     }
 
+    setUploading(true);
+
     try {
       const formData = new FormData();
       formData.append("sebi_name", sebiName);
@@ -61,6 +64,8 @@ export default function SebiOnlineDisputeModel() {
     } catch (err) {
       console.error(err);
       setMessage("Server error");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -84,7 +89,7 @@ export default function SebiOnlineDisputeModel() {
           <input type="file" onChange={(e) => setFile(e.target.files && e.target.files[0])} />
         </label>
 
-        <button type="submit">Add SEBI entry</button>
+        <button type="submit" disabled={uploading}>{uploading ? "Uploading..." : "Add SEBI entry"}</button>
         {message && <div>{message}</div>}
       </form>
 

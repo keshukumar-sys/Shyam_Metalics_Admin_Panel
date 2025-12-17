@@ -3,6 +3,7 @@ import React, { useEffect, useState } from "react";
 export default function TdsDeclarationModel() {
   const [tdsName, setTdsName] = useState("");
   const [tdsDate, setTdsDate] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [list, setList] = useState([]);
@@ -33,14 +34,16 @@ export default function TdsDeclarationModel() {
       return;
     }
 
+    setUploading(true);
+
     try {
       const formData = new FormData();
       formData.append("tds_name", tdsName);
       formData.append("tds_date", tdsDate);
-      // append the file under the same field name the backend expects
+      // append the file under the expected field name
       formData.append("tds_file", file);
-      // also include a simple text field so controllers that validate req.body.tds_file succeed
-      formData.append("tds_file", file.name);
+      // also include the original filename under a separate key
+      formData.append("tds_file_name", file.name);
 
       const res = await fetch(`${API_BASE}/create_tds`, {
         method: "POST",
@@ -61,6 +64,8 @@ export default function TdsDeclarationModel() {
     } catch (err) {
       console.error(err);
       setMessage("Server error");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -84,11 +89,11 @@ export default function TdsDeclarationModel() {
           <input
             type="file"
             onChange={(e) => setFile(e.target.files && e.target.files[0])}
-            accept="*/*"
-          />
-        </label>
+              accept="*/*"
+            />
+          </label>
 
-        <button type="submit">Upload TDS</button>
+          <button type="submit" disabled={uploading}>{uploading ? "Uploading..." : "Upload TDS"}</button>
         {message && <div>{message}</div>}
       </form>
 

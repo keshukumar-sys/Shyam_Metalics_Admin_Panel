@@ -6,6 +6,7 @@ export default function InvestorAnalystModel() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [list, setList] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/investor-analyst`;
 
@@ -34,6 +35,8 @@ export default function InvestorAnalystModel() {
       return;
     }
 
+    setUploading(true);
+
     try {
       const formData = new FormData();
       formData.append("investor_analyst_name", name);
@@ -60,6 +63,8 @@ export default function InvestorAnalystModel() {
     } catch (err) {
       console.error(err);
       setMessage("Server error");
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -83,7 +88,7 @@ export default function InvestorAnalystModel() {
           <input type="file" onChange={(e) => setFile(e.target.files && e.target.files[0])} />
         </label>
 
-        <button type="submit">Add detail</button>
+        <button type="submit" disabled={uploading}>{uploading ? "Uploading..." : "Add detail"}</button>
         {message && <div>{message}</div>}
       </form>
 
