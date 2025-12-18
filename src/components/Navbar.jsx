@@ -23,6 +23,7 @@ const Navbar = () => {
         <Link to="/tds">TdsDeclarationModel</Link>
         <Link to="/award-stories">AwardStories</Link>
         <Link to="/award-news">AwardNews</Link>
+        <Link to="/blog">Blog</Link>
       </div>
     </nav>
   );

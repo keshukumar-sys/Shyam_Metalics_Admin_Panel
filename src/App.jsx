@@ -16,6 +16,7 @@ import EnvironmentModel from "./pages/EnvironmentModel";
 import CorporateModel from "./pages/CorporateModel";
 import AwardStories from "./pages/AwardStories";
 import AwardNews from "./pages/AwardNews";
+import Blog from "./pages/Blog";
 // import CreateBlog from "./pages/Blog";
 
 function App() {
@@ -39,6 +40,7 @@ function App() {
           <Route path="/corporate" element={<CorporateModel />} />
           <Route path="/award-stories" element={<AwardStories />} />
           <Route path="/award-news" element={<AwardNews />} />
+          <Route path="/blog" element={<Blog />}/>
           {/* <Route path="/blog" element={<CreateBlog />} /> */}
         </Route>
       </Routes>
