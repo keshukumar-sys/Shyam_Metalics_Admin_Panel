@@ -19,6 +19,7 @@ export default function PoliciesModel() {
       const res = await fetch(`${API_BASE}/get_policy`);
       if (!res.ok) throw new Error("Failed to fetch policies");
       const json = await res.json();
+      console.log("Fetched policies:", json);
       setList(json.data || []);
     } catch (err) {
       console.error(err);
