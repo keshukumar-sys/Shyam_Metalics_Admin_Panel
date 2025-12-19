@@ -24,6 +24,7 @@ const Navbar = () => {
         <Link to="/award-stories">AwardStories</Link>
         <Link to="/award-news">AwardNews</Link>
         <Link to="/blog">Blog</Link>
+        <Link to="/disclosure">Disclosure</Link>
       </div>
     </nav>
   );
