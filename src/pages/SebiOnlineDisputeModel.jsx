@@ -42,7 +42,7 @@ export default function SebiOnlineDisputeModel() {
       formData.append("sebi_name", sebiName);
       formData.append("sebi_date", sebiDate);
       // send file under both keys to match common multer setups
-      formData.append("file", file);
+      formData.append("sebi_file", file);
   
 
       const res = await fetch(`${API_BASE}/add_sebi`, {
