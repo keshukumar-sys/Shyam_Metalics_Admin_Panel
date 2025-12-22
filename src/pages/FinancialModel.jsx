@@ -69,6 +69,23 @@ export default function FinancialModel() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const json = await res.json();
+      setMessage(json.message || "Deleted");
+      fetchList(option);
+    } catch (err) {
+      console.error(err);
+      setMessage("Error deleting item");
+    }
+  };
+
   const options = [
     "Annual Report",
     "Financial Annual Report",
@@ -125,6 +142,11 @@ export default function FinancialModel() {
                   </a>
                 </div>
               )}
+              <div>
+                <button onClick={() => handleDelete(item._id || item.id)} style={{marginLeft:8}}>
+                  Delete
+                </button>
+              </div>
             </li>
           ))}
         </ul>

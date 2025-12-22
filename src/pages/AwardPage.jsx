@@ -69,6 +69,18 @@ export default function AwardPage() {
     }
   }
 
+  async function handleDelete(id) {
+    if (!window.confirm("Are you sure you want to delete this award?")) return;
+    try {
+      const res = await axios.delete(`${API_BASE}/award/delete`, { data: { id } });
+      alert(res.data?.message || "Deleted");
+      fetchAwards();
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting award");
+    }
+  }
+
   return (
     <div style={{ padding: 20 }}>
       <h1>Awards</h1>
@@ -165,6 +177,14 @@ export default function AwardPage() {
               <div style={{ fontSize: 12, color: "#666" }}>{a.category}</div>
               <div style={{ fontWeight: "bold", marginTop: 6 }}>{a.title}</div>
               <div style={{ marginTop: 8 }}>{a.description}</div>
+              <div style={{ marginTop: 10 }}>
+                <button
+                  onClick={() => handleDelete(a._id || a.id)}
+                  style={{ backgroundColor: '#dc2626', color: 'white', padding: '6px 10px', border: 'none', borderRadius: 4 }}
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           ))}
         </div>

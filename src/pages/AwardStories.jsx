@@ -36,6 +36,19 @@ export default function EventForm() {
 
     fetchStories();
   }, []);
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this story?")) return;
+    try {
+      const res = await axios.delete(`${API_BASE}/stories/delete`, { data: { id } });
+      alert(res.data?.message || "Deleted");
+      // re-fetch stories
+      const r = await axios.get(`${API_BASE}/stories/get_event_stories`);
+      setStories(r.data.data || []);
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting story");
+    }
+  };
   const handleContentChange = (index, value) => {
     const updated = [...content];
     updated[index].text = value;
@@ -268,6 +281,11 @@ export default function EventForm() {
             {story.front_image?.url && (
               <img src={story.front_image.url} alt={story.name} width="100%" />
             )}
+            <div style={{ marginTop: 8 }}>
+              <button onClick={() => handleDelete(story._id)} style={{ backgroundColor: '#dc2626', color: 'white', padding: '6px 10px', border: 'none', borderRadius: 4 }}>
+                Delete
+              </button>
+            </div>
           </div>
         ))
       )}

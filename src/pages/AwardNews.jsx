@@ -25,6 +25,18 @@ export default function NewsManager() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this news item?")) return;
+    try {
+      const res = await axios.delete(`${API_BASE}/news/delete`, { data: { id } });
+      alert(res.data?.message || "Deleted");
+      fetchNews();
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting news item");
+    }
+  };
+
   useEffect(() => {
     fetchNews();
   }, []);
@@ -250,6 +262,11 @@ export default function NewsManager() {
                     {c.type === "heading" ? <strong>{c.text}</strong> : c.text}
                   </p>
                 ))}
+            </div>
+            <div style={{ marginTop: 10 }}>
+              <button onClick={() => handleDelete(news._id)} style={{ backgroundColor: '#dc2626', color: 'white', padding: '6px 10px', border: 'none', borderRadius: 4 }}>
+                Delete
+              </button>
             </div>
           </div>
         ))

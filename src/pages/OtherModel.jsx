@@ -85,6 +85,23 @@ export default function OtherModel() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const json = await res.json();
+      alert(json.message || "Deleted");
+      fetchList();
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting item");
+    }
+  };
+
   return (
     <div
       style={{
@@ -319,6 +336,22 @@ export default function OtherModel() {
                         View file
                       </a>
                     )}
+                    <div style={{ marginTop: 8 }}>
+                      <button
+                        onClick={() => handleDelete(item._id || item.id)}
+                        style={{
+                          backgroundColor: "#dc2626",
+                          color: "white",
+                          border: "none",
+                          padding: "6px 10px",
+                          borderRadius: 4,
+                          cursor: "pointer",
+                          marginTop: 8,
+                        }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

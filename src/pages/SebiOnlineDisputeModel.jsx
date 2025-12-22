@@ -69,6 +69,23 @@ export default function SebiOnlineDisputeModel() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const json = await res.json();
+      setMessage(json.message || "Deleted");
+      fetchList();
+    } catch (err) {
+      console.error(err);
+      setMessage("Error deleting item");
+    }
+  };
+
   return (
     <div style={{ padding: 16 }}>
       <h2>SEBI Online Dispute / Filings</h2>
@@ -107,6 +124,11 @@ export default function SebiOnlineDisputeModel() {
                   </a>
                 </div>
               )}
+              <div>
+                <button onClick={() => handleDelete(item._id || item.id)} style={{marginLeft:8}}>
+                  Delete
+                </button>
+              </div>
             </li>
           ))}
         </ul>

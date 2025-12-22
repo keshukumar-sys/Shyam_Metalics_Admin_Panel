@@ -87,6 +87,18 @@ export default function BlogPage() {
     }
   };
 
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    try {
+      const res = await axios.delete(`${API_BASE}/blog/delete`, { data: { id } });
+      alert(res.data?.message || "Deleted");
+      fetchBlogs();
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting blog");
+    }
+  };
+
   return (
     <div className="container mx-auto p-4">
       <h1 className="text-2xl font-bold mb-4">Create a Blog</h1>
@@ -151,6 +163,14 @@ export default function BlogPage() {
                   <p>{f.listdesc}</p>
                 </div>
               ))}
+            </div>
+            <div className="mt-3">
+              <button
+                onClick={() => handleDelete(blog._id)}
+                className="bg-red-500 text-white px-3 py-1 rounded"
+              >
+                Delete
+              </button>
             </div>
           </div>
         ))}
