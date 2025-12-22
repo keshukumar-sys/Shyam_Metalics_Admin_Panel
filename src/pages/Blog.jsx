@@ -19,7 +19,10 @@ export default function BlogPage() {
   const fetchBlogs = async () => {
     try {
       const res = await axios.get(`${API_BASE}/blog/get_blog`);
+      console.log(res);
       setBlogs(res.data.blogs || []);
+      
+
     } catch (err) {
       console.error(err);
     }
