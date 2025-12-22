@@ -42,9 +42,6 @@ export default function TdsDeclarationModel() {
       formData.append("tds_date", tdsDate);
       // append the file under the expected field name
       formData.append("tds_file", file);
-      // also include the original filename under a separate key
-      formData.append("tds_file_name", file.name);
-
       const res = await fetch(`${API_BASE}/create_tds`, {
         method: "POST",
         body: formData,
@@ -66,6 +63,23 @@ export default function TdsDeclarationModel() {
       setMessage("Server error");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const json = await res.json();
+      setMessage(json.message || "Deleted");
+      fetchList();
+    } catch (err) {
+      console.error(err);
+      setMessage("Error deleting item");
     }
   };
 
@@ -111,6 +125,11 @@ export default function TdsDeclarationModel() {
                   </a>
                 </div>
               )}
+              <div>
+                <button onClick={() => handleDelete(item._id || item.id)} style={{marginLeft:8}}>
+                  Delete
+                </button>
+              </div>
             </li>
           ))}
         </ul>

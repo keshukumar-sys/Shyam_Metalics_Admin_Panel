@@ -42,7 +42,7 @@ export default function InvestorAnalystModel() {
       formData.append("investor_analyst_name", name);
       formData.append("investor_analyst_date", date);
       // some backends expect generic 'file' key as well
-      formData.append("file", file);
+      formData.append("investor_analyst_file", file);
 
       const res = await fetch(`${API_BASE}/add_investor_analyst`, {
         method: "POST",
@@ -65,6 +65,23 @@ export default function InvestorAnalystModel() {
       setMessage("Server error");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const json = await res.json();
+      setMessage(json.message || "Deleted");
+      fetchList();
+    } catch (err) {
+      console.error(err);
+      setMessage("Error deleting item");
     }
   };
 
@@ -106,6 +123,11 @@ export default function InvestorAnalystModel() {
                   </a>
                 </div>
               )}
+              <div>
+                <button onClick={() => handleDelete(item._id || item.id)} style={{marginLeft:8}}>
+                  Delete
+                </button>
+              </div>
             </li>
           ))}
         </ul>

@@ -1,14 +1,16 @@
 import React, { useEffect, useState } from "react";
 
-export default function FamiliarModel() {
-  const [name, setName] = useState("");
-  const [date, setDate] = useState("");
+export default function DisclosuresModel() {
+  const [DisclosureName, setDisclosureName] = useState("");
+  const [DisclosureDate, setDisclosureDate] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [list, setList] = useState([]);
-  const [uploading, setUploading] = useState(false);
 
-  const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/familiar`;
+  const API_BASE = `${
+    import.meta.env.VITE_API_BASE || "http://localhost:3002"
+  }/disclosure`;
 
   useEffect(() => {
     fetchList();
@@ -16,13 +18,12 @@ export default function FamiliarModel() {
 
   const fetchList = async () => {
     try {
-      const res = await fetch(`${API_BASE}/get_familiar`);
+      const res = await fetch(`${API_BASE}/get_disclosure`);
       if (!res.ok) throw new Error("Failed to fetch");
       const json = await res.json();
       setList(json.data || []);
     } catch (err) {
       console.error(err);
-      setList([]);
     }
   };
 
@@ -30,7 +31,7 @@ export default function FamiliarModel() {
     e.preventDefault();
     setMessage("");
 
-    if (!name || !date || !file) {
+    if (!DisclosureName || !DisclosureDate || !file) {
       setMessage("Please provide name, date and a file.");
       return;
     }
@@ -39,11 +40,11 @@ export default function FamiliarModel() {
 
     try {
       const formData = new FormData();
-      formData.append("familiar_name", name);
-      formData.append("familiar_date", date);
+      formData.append("name", DisclosureName);
+      formData.append("date", DisclosureDate);
+      // append the file under the expected field name
       formData.append("file", file);
-
-      const res = await fetch(`${API_BASE}/add_familiar`, {
+      const res = await fetch(`${API_BASE}/create_disclosure`, {
         method: "POST",
         body: formData,
       });
@@ -54,9 +55,9 @@ export default function FamiliarModel() {
         return;
       }
 
-      setMessage(result.message || "Familiar entry added");
-      setName("");
-      setDate("");
+      setMessage(result.message || "DisclosureUploaded");
+      setDisclosureName("");
+      setDisclosureDate("");
       setFile(null);
       fetchList();
     } catch (err) {
@@ -86,38 +87,54 @@ export default function FamiliarModel() {
 
   return (
     <div style={{ padding: 16 }}>
-      <h2>Familiar</h2>
-
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: 8, maxWidth: 640 }}>
+      <h2>Disclosures</h2>
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: "grid", gap: 8, maxWidth: 480 }}
+      >
         <label>
           Name
-          <input value={name} onChange={(e) => setName(e.target.value)} />
+          <input
+            value={DisclosureName}
+            onChange={(e) => setDisclosureName(e.target.value)}
+          />
         </label>
 
         <label>
           Date
-          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
+          <input
+            type="date"
+            value={DisclosureDate}
+            onChange={(e) => setDisclosureDate(e.target.value)}
+          />
         </label>
 
         <label>
           File
-          <input type="file" onChange={(e) => setFile(e.target.files && e.target.files[0])} />
+          <input
+            type="file"
+            onChange={(e) => setFile(e.target.files?.[0])}
+            accept="*/*"
+          />
         </label>
 
-        <button type="submit" disabled={uploading}>{uploading ? "Uploading..." : "Add Familiar"}</button>
+        <button type="submit" disabled={uploading}>
+          {uploading ? "Uploading..." : "Upload Disclosure"}
+        </button>
+
         {message && <div>{message}</div>}
       </form>
 
       <section style={{ marginTop: 24 }}>
-        <h3>Entries</h3>
+        <h3>Uploaded Disclosure</h3>
         {list.length === 0 && <div>No records found</div>}
         <ul>
           {list.map((item, idx) => (
             <li key={idx}>
-              <strong>{item.familiar_name}</strong> — {item.familiar_date}
-              {item.familiar_file && (
+              <strong>{item.name}</strong> — {item.date}
+              {item.file && (
                 <div>
-                  <a href={item.familiar_file} target="_blank" rel="noreferrer">
+                  <a href={item.file} target="_blank" rel="noreferrer">
                     View file
                   </a>
                 </div>

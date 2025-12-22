@@ -42,7 +42,7 @@ export default function SebiOnlineDisputeModel() {
       formData.append("sebi_name", sebiName);
       formData.append("sebi_date", sebiDate);
       // send file under both keys to match common multer setups
-      formData.append("file", file);
+      formData.append("sebi_file", file);
   
 
       const res = await fetch(`${API_BASE}/add_sebi`, {
@@ -66,6 +66,23 @@ export default function SebiOnlineDisputeModel() {
       setMessage("Server error");
     } finally {
       setUploading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const json = await res.json();
+      setMessage(json.message || "Deleted");
+      fetchList();
+    } catch (err) {
+      console.error(err);
+      setMessage("Error deleting item");
     }
   };
 
@@ -107,6 +124,11 @@ export default function SebiOnlineDisputeModel() {
                   </a>
                 </div>
               )}
+              <div>
+                <button onClick={() => handleDelete(item._id || item.id)} style={{marginLeft:8}}>
+                  Delete
+                </button>
+              </div>
             </li>
           ))}
         </ul>
