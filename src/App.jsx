@@ -5,6 +5,7 @@ import About from "./pages/About";
 import Login from "./pages/Login";
 import CreateUploader from "./pages/CreateUploader";
 import ManageUsers from "./pages/ManageUsers";
+import ActivityLogs from "./pages/ActivityLogs";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 import TdsDeclarationModel from "./pages/TdsDeclarationModel";
@@ -38,6 +39,11 @@ function App() {
           <Route path="/manage-users" element={
             <ProtectedRoute allowed={["admin"]}>
               <ManageUsers />
+            </ProtectedRoute>
+          } />
+          <Route path="/activity-logs" element={
+            <ProtectedRoute allowed={["admin"]}>
+              <ActivityLogs />
             </ProtectedRoute>
           } />
           <Route path="/" element={<About />} />

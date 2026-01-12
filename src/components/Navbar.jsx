@@ -38,8 +38,8 @@ const Navbar = () => {
         {role === "admin" && <>
           <NavLink to="/create-uploader" className="auth-btn">Create Uploader</NavLink>
           <NavLink to="/manage-users" className="auth-btn" style={{ marginTop: 6 }}>Manage Users</NavLink>
-        </>}
-        {getToken() ? (
+          <NavLink to="/activity-logs" className="auth-btn" style={{ marginTop: 6 }}>Activity Logs</NavLink>
+        </>}        {getToken() ? (
           <button className="auth-btn" onClick={handleLogout}>Logout</button>
         ) : (
           <NavLink to="/login" className="auth-btn">Login</NavLink>
