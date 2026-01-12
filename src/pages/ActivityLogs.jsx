@@ -3,7 +3,10 @@ import DataTable from "../components/DataTable";
 import { authHeader } from "../auth";
 
 // Vite env vars: set VITE_API_BASE_URL (optional) and VITE_LOGS_LIMIT
-const API_BASE = ((import.meta.env.VITE_API_BASE_URL && import.meta.env.VITE_API_BASE_URL.trim()) || (import.meta.env.DEV ? 'http://localhost:3002' : '')).replace(/\/$/, '');
+const API_BASE = import.meta.env.VITE_API_BASE_URL
+  ? import.meta.env.VITE_API_BASE_URL.replace(/\/$/, "")
+  : (import.meta.env.DEV ? "http://localhost:3002" : null);
+
 const DEFAULT_LIMIT = parseInt(import.meta.env.VITE_LOGS_LIMIT || '200', 10);
 
 const ActivityLogs = () => {
