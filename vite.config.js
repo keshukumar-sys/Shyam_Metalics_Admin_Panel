@@ -3,8 +3,5 @@ import react from '@vitejs/plugin-react'
 
 export default defineConfig({
   plugins: [react()],
-  server: {
-    // This ensures all unknown routes fallback to index.html
-    historyApiFallback: true
-  }
+  // no historyApiFallback here — handled in deployment
 })
