@@ -2,6 +2,11 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Layout from "./Layout";
 
 import About from "./pages/About";
+import Login from "./pages/Login";
+import CreateUploader from "./pages/CreateUploader";
+import ManageUsers from "./pages/ManageUsers";
+import ProtectedRoute from "./components/ProtectedRoute";
+
 import TdsDeclarationModel from "./pages/TdsDeclarationModel";
 import StockExchangeComplianceModel from "./pages/StockExchangeComplianceModel";
 import SebiOnlineDisputeModel from "./pages/SebiOnlineDisputeModel";
@@ -25,8 +30,22 @@ function App() {
   return (
 
       <Routes>
-        {/* Layout wrapper */}
-        <Route element={<Layout />}>
+        <Route path="/login" element={<Login />} />
+        <Route element={
+          <ProtectedRoute allowed={["admin", "uploader"]}>
+            <Layout />
+          </ProtectedRoute>
+        }>
+          <Route path="/create-uploader" element={
+            <ProtectedRoute allowed={["admin"]}>
+              <CreateUploader />
+            </ProtectedRoute>
+          } />
+          <Route path="/manage-users" element={
+            <ProtectedRoute allowed={["admin"]}>
+              <ManageUsers />
+            </ProtectedRoute>
+          } />
           <Route path="/" element={<About />} />
           <Route path="/tds" element={<TdsDeclarationModel />} />
           <Route path="/stock-exchange" element={<StockExchangeComplianceModel />} />

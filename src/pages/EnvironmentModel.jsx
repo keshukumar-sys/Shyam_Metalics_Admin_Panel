@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
+import DataTable from "../components/DataTable";
+import "../components/css/Form.css";
+import { authHeader } from "../auth";
 
 export default function EnvironmentModel() {
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [list, setList] = useState([]);
   const [uploading, setUploading] = useState(false);
 
@@ -29,6 +33,7 @@ export default function EnvironmentModel() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
+    setUploading(true);
 
     if (!name || !date || !file) {
       setMessage("Please provide name, date and a file.");
@@ -68,19 +73,17 @@ export default function EnvironmentModel() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this item?")) return;
     try {
       const res = await fetch(`${API_BASE}/delete`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeader() },
         body: JSON.stringify({ id }),
       });
       const json = await res.json();
-      setMessage(json.message || "Deleted");
+      if (!res.ok) return alert(json.message || "Delete failed");
       fetchList();
-    } catch (err) {
-      console.error(err);
-      setMessage("Error deleting item");
+    } catch (e) {
+      alert("Network error");
     }
   };
 
@@ -110,26 +113,17 @@ export default function EnvironmentModel() {
 
       <section style={{ marginTop: 24 }}>
         <h3>Entries</h3>
-        {list.length === 0 && <div>No records found</div>}
-        <ul>
-          {list.map((item, idx) => (
-            <li key={idx}>
-              <strong>{item.detail_name}</strong> — {new Date(item.detail_date).toLocaleDateString()}
-              {item.detail_file && (
-                <div>
-                  <a href={item.detail_file} target="_blank" rel="noreferrer">
-                    View file
-                  </a>
-                </div>
-              )}
-              <div>
-                <button onClick={() => handleDelete(item._id || item.id)} style={{marginLeft:8}}>
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <DataTable
+          columns={[
+            { key: "detail_name", label: "Name" },
+            { key: "detail_date", label: "Date", render: (r) => new Date(r.detail_date).toLocaleDateString() },
+            { key: "detail_file", label: "File", render: (r) => (r.detail_file ? <a href={r.detail_file} target="_blank" rel="noreferrer">View</a> : "-") }
+          ]}
+          data={list}
+          actions={(row) => (
+            <button className="btn-sm" onClick={() => handleDelete(row._id)}>Delete</button>
+          )}
+        />
       </section>
     </div>
   );

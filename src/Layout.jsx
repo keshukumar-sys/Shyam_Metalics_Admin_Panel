@@ -1,35 +1,20 @@
 import React from "react";
 import { Outlet } from "react-router-dom";
 import Navbar from "./components/Navbar.jsx";
+import AdminTable from "./components/AdminTable";
+import "./components/css/Layout.css";
 
 const Layout = () => {
   return (
-    <div style={{ display: "flex", height: "100vh", fontFamily: "Arial, sans-serif" }}>
-      {/* Sidebar / Navbar */}
-      <aside
-        style={{
-          color: "#fff",
-          display: "flex",
-          flexDirection: "column",
-          padding: "20px",
-          boxSizing: "border-box",
-        }}
-      >
-        <Navbar style={{width:"100%"}} />
+    <div className="app-grid">
+      <aside className="app-sidebar">
+        <Navbar />
       </aside>
-
-      {/* Main content */}
-      <main
-        style={{
-          flex: 1,
-          backgroundColor: "#f3f4f6",
-          maringTop:"10%", // light background
-          padding: "20px",
-          overflowY: "auto",
-        }}
-      >
-        <Outlet />
-      </main>
+      <div className="app-main">
+        <AdminTable>
+          <Outlet />
+        </AdminTable>
+      </div>
     </div>
   );
 };

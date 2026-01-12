@@ -1,4 +1,8 @@
 import React, { useEffect, useState } from "react";
+import DataTable from "../components/DataTable";
+import "../App.css";
+import "../components/css/Form.css";
+import { authHeader } from "../auth";
 
 export default function TdsDeclarationModel() {
   const [tdsName, setTdsName] = useState("");
@@ -83,56 +87,72 @@ export default function TdsDeclarationModel() {
     }
   };
 
+  const handleDelete = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ id }),
+      });
+      const json = await res.json();
+      if (!res.ok) return alert(json.message || "Delete failed");
+      fetchList();
+    } catch (e) {
+      alert("Network error");
+    }
+  };
+
   return (
-    <div style={{ padding: 16 }}>
+    <div className="container" style={{ padding: 16 }}>
       <h2>TDS Declaration</h2>
 
-      <form onSubmit={handleSubmit} style={{ display: "grid", gap: 8, maxWidth: 480 }}>
-        <label>
-          Name
-          <input value={tdsName} onChange={(e) => setTdsName(e.target.value)} />
-        </label>
+      <div className="form-card">
+        <form onSubmit={handleSubmit} className="form-grid">
+          <label>
+            Name
+            <input className="form-input" value={tdsName} onChange={(e) => setTdsName(e.target.value)} />
+          </label>
 
-        <label>
-          Date
-          <input type="date" value={tdsDate} onChange={(e) => setTdsDate(e.target.value)} />
-        </label>
+          <label>
+            Date
+            <input className="form-input" type="date" value={tdsDate} onChange={(e) => setTdsDate(e.target.value)} />
+          </label>
 
-        <label>
-          File
-          <input
-            type="file"
-            onChange={(e) => setFile(e.target.files && e.target.files[0])}
+          <label>
+            File
+            <input
+              className="form-input"
+              type="file"
+              onChange={(e) => setFile(e.target.files && e.target.files[0])}
               accept="*/*"
             />
           </label>
 
-          <button type="submit" disabled={uploading}>{uploading ? "Uploading..." : "Upload TDS"}</button>
-        {message && <div>{message}</div>}
-      </form>
+          <div>
+            <button type="submit" className="btn">Upload TDS</button>
+          </div>
+          {message && <div className={`form-msg ${message.toLowerCase().includes('failed') || message.toLowerCase().includes('please') ? 'error' : ''}`}>{message}</div>}
+        </form>
+      </div>
 
       <section style={{ marginTop: 24 }}>
         <h3>Uploaded TDS</h3>
-        {list.length === 0 && <div>No records found</div>}
-        <ul>
-          {list.map((item, idx) => (
-            <li key={idx}>
-              <strong>{item.tds_name}</strong> — {item.tds_date}
-              {item.tds_file && (
-                <div>
-                  <a href={item.tds_file} target="_blank" rel="noreferrer">
-                    View file
-                  </a>
-                </div>
+        <div className="card">
+          <DataTable
+            columns={[
+              { key: "tds_name", label: "Name" },
+              { key: "tds_date", label: "Date" },
+              { key: "tds_file", label: "File", render: (r) => (r.tds_file ? <a href={r.tds_file} target="_blank" rel="noreferrer">View</a> : "-") }
+            ]}
+            data={list}
+            actions={(row) => (
+                <>
+                  <a className="btn-sm" href={row.tds_file || '#'} target="_blank" rel="noreferrer">Open</a>
+                  <button style={{ marginLeft: 8 }} className="btn-sm" onClick={() => handleDelete(row._id)}>Delete</button>
+                </>
               )}
-              <div>
-                <button onClick={() => handleDelete(item._id || item.id)} style={{marginLeft:8}}>
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+          />
+        </div>
       </section>
     </div>
   );
