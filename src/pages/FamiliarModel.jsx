@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
+import DataTable from "../components/DataTable";
+import "../components/css/Form.css";
+import { authHeader } from "../auth";
 
 export default function FamiliarModel() {
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [list, setList] = useState([]);
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/familiar`;
@@ -28,6 +32,7 @@ export default function FamiliarModel() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
+    setUploading(true);
 
     if (!name || !date || !file) {
       setMessage("Please provide name, date and a file.");
@@ -59,6 +64,23 @@ export default function FamiliarModel() {
     } catch (err) {
       console.error(err);
       setMessage("Server error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ id }),
+      });
+      const json = await res.json();
+      if (!res.ok) return alert(json.message || "Delete failed");
+      fetchList();
+    } catch (e) {
+      alert("Network error");
     }
   };
 
@@ -82,27 +104,23 @@ export default function FamiliarModel() {
           <input type="file" onChange={(e) => setFile(e.target.files && e.target.files[0])} />
         </label>
 
-        <button type="submit">Add Familiar</button>
+        <button type="submit" disabled={uploading}>{uploading ? "Uploading..." : "Add Familiar"}</button>
         {message && <div>{message}</div>}
       </form>
 
       <section style={{ marginTop: 24 }}>
         <h3>Entries</h3>
-        {list.length === 0 && <div>No records found</div>}
-        <ul>
-          {list.map((item, idx) => (
-            <li key={idx}>
-              <strong>{item.familiar_name}</strong> — {item.familiar_date}
-              {item.familiar_file && (
-                <div>
-                  <a href={item.familiar_file} target="_blank" rel="noreferrer">
-                    View file
-                  </a>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+        <DataTable
+          columns={[
+            { key: "familiar_name", label: "Name" },
+            { key: "familiar_date", label: "Date" },
+            { key: "familiar_file", label: "File", render: (r) => (r.familiar_file ? <a href={r.familiar_file} target="_blank" rel="noreferrer">View</a> : "-") }
+          ]}
+          data={list}
+          actions={(row) => (
+            <button className="btn-sm" onClick={() => handleDelete(row._id)}>Delete</button>
+          )}
+        />
       </section>
     </div>
   );

@@ -1,4 +1,7 @@
 import React, { useEffect, useState } from "react";
+import DataTable from "../components/DataTable";
+import "../components/css/Form.css";
+import { authHeader } from "../auth";
 
 export default function CorporateModel() {
   const [option, setOption] = useState("Newspaper Publication");
@@ -6,6 +9,7 @@ export default function CorporateModel() {
   const [date, setDate] = useState("");
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [list, setList] = useState([]);
 
   const API_BASE = `${
@@ -32,6 +36,7 @@ export default function CorporateModel() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
+    setUploading(true);
 
     if (!option || !name || !date || !file) {
       setMessage("Please provide option, name, date and a file.");
@@ -64,6 +69,23 @@ export default function CorporateModel() {
     } catch (err) {
       console.error(err);
       setMessage("Server error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ id }),
+      });
+      const json = await res.json();
+      if (!res.ok) return alert(json.message || "Delete failed");
+      fetchList(option);
+    } catch (e) {
+      alert("Network error");
     }
   };
 
@@ -115,27 +137,25 @@ export default function CorporateModel() {
           />
         </label>
 
-        <button type="submit">Add announcement</button>
+        <button type="submit" disabled={uploading}>{uploading ? "Uploading..." : "Add announcement"}</button>
         {message && <div>{message}</div>}
       </form>
 
       <section style={{ marginTop: 24 }}>
         <h3>{option} details</h3>
-        {list.length === 0 && <div>No records found</div>}
-        <ul>
-          {list.map((item, idx) => (
-            <li key={idx}>
-              <strong>{item.name}</strong> — {item.date}
-              {item.file && (
-                <div>
-                  <a href={item.file} target="_blank" rel="noreferrer">
-                    View file
-                  </a>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+        <DataTable
+          columns={[
+            { key: "name", label: "Name" },
+            { key: "date", label: "Date" },
+            { key: "file", label: "File", render: (r) => (r.file ? <a href={r.file} target="_blank" rel="noreferrer">View</a> : "-") }
+          ]}
+          data={list}
+          actions={(row) => (
+            <>
+              <button className="btn-sm" onClick={() => handleDelete(row._id)}>Delete</button>
+            </>
+          )}
+        />
       </section>
     </div>
   );

@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from "react";
+import DataTable from "../components/DataTable";
+import "../components/css/Form.css";
+import { authHeader } from "../auth";
 
 export default function EnvironmentModel() {
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [list, setList] = useState([]);
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/environment`;
@@ -28,6 +32,7 @@ export default function EnvironmentModel() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
+    setUploading(true);
 
     if (!name || !date || !file) {
       setMessage("Please provide name, date and a file.");
@@ -59,6 +64,23 @@ export default function EnvironmentModel() {
     } catch (err) {
       console.error(err);
       setMessage("Server error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json", ...authHeader() },
+        body: JSON.stringify({ id }),
+      });
+      const json = await res.json();
+      if (!res.ok) return alert(json.message || "Delete failed");
+      fetchList();
+    } catch (e) {
+      alert("Network error");
     }
   };
 
@@ -82,27 +104,23 @@ export default function EnvironmentModel() {
           <input type="file" onChange={(e) => setFile(e.target.files && e.target.files[0])} />
         </label>
 
-        <button type="submit">Add Environment</button>
+        <button type="submit" disabled={uploading}>{uploading ? "Uploading..." : "Add Environment"}</button>
         {message && <div>{message}</div>}
       </form>
 
       <section style={{ marginTop: 24 }}>
         <h3>Entries</h3>
-        {list.length === 0 && <div>No records found</div>}
-        <ul>
-          {list.map((item, idx) => (
-            <li key={idx}>
-              <strong>{item.detail_name}</strong> — {new Date(item.detail_date).toLocaleDateString()}
-              {item.detail_file && (
-                <div>
-                  <a href={item.detail_file} target="_blank" rel="noreferrer">
-                    View file
-                  </a>
-                </div>
-              )}
-            </li>
-          ))}
-        </ul>
+        <DataTable
+          columns={[
+            { key: "detail_name", label: "Name" },
+            { key: "detail_date", label: "Date", render: (r) => new Date(r.detail_date).toLocaleDateString() },
+            { key: "detail_file", label: "File", render: (r) => (r.detail_file ? <a href={r.detail_file} target="_blank" rel="noreferrer">View</a> : "-") }
+          ]}
+          data={list}
+          actions={(row) => (
+            <button className="btn-sm" onClick={() => handleDelete(row._id)}>Delete</button>
+          )}
+        />
       </section>
     </div>
   );
