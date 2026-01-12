@@ -1,5 +1,8 @@
 {
   "rewrites": [
+    
+   { "source": "/logs", "destination": "/logs" },
+   
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
