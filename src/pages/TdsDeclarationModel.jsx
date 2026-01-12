@@ -7,6 +7,7 @@ import { authHeader } from "../auth";
 export default function TdsDeclarationModel() {
   const [tdsName, setTdsName] = useState("");
   const [tdsDate, setTdsDate] = useState("");
+  const [uploading, setUploading] = useState(false);
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [list, setList] = useState([]);
@@ -37,15 +38,14 @@ export default function TdsDeclarationModel() {
       return;
     }
 
+    setUploading(true);
+
     try {
       const formData = new FormData();
       formData.append("tds_name", tdsName);
       formData.append("tds_date", tdsDate);
-      // append the file under the same field name the backend expects
+      // append the file under the expected field name
       formData.append("tds_file", file);
-      // also include a simple text field so controllers that validate req.body.tds_file succeed
-      formData.append("tds_file", file.name);
-
       const res = await fetch(`${API_BASE}/create_tds`, {
         method: "POST",
         body: formData,
@@ -65,6 +65,25 @@ export default function TdsDeclarationModel() {
     } catch (err) {
       console.error(err);
       setMessage("Server error");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Are you sure you want to delete this item?")) return;
+    try {
+      const res = await fetch(`${API_BASE}/delete`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const json = await res.json();
+      setMessage(json.message || "Deleted");
+      fetchList();
+    } catch (err) {
+      console.error(err);
+      setMessage("Error deleting item");
     }
   };
 

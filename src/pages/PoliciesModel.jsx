@@ -10,6 +10,7 @@ export default function PoliciesModel() {
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [list, setList] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/policy`;
 
@@ -22,6 +23,7 @@ export default function PoliciesModel() {
       const res = await fetch(`${API_BASE}/get_policy`);
       if (!res.ok) throw new Error("Failed to fetch policies");
       const json = await res.json();
+      console.log("Fetched policies:", json);
       setList(json.data || []);
     } catch (err) {
       console.error(err);
@@ -38,6 +40,8 @@ export default function PoliciesModel() {
       setMessage("Please provide policy name, date and a file.");
       return;
     }
+
+    setUploading(true);
 
     try {
       const formData = new FormData();

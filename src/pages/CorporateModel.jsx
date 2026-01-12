@@ -11,6 +11,7 @@ export default function CorporateModel() {
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [list, setList] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const API_BASE = `${
     import.meta.env.VITE_API_BASE || "http://localhost:3002"
@@ -42,6 +43,8 @@ export default function CorporateModel() {
       setMessage("Please provide option, name, date and a file.");
       return;
     }
+
+    setUploading(true);
 
     try {
       const formData = new FormData();
