@@ -10,6 +10,7 @@ export default function InvestorAnalystModel() {
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [list, setList] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/investor-analyst`;
 
@@ -39,12 +40,14 @@ export default function InvestorAnalystModel() {
       return;
     }
 
+    setUploading(true);
+
     try {
       const formData = new FormData();
       formData.append("investor_analyst_name", name);
       formData.append("investor_analyst_date", date);
       // some backends expect generic 'file' key as well
-      formData.append("file", file);
+      formData.append("investor_analyst_file", file);
 
       const res = await fetch(`${API_BASE}/add_investor_analyst`, {
         method: "POST",

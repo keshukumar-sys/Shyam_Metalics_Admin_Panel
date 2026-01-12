@@ -11,6 +11,7 @@ export default function StockExchangeComplianceModel() {
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [list, setList] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/stock`;
 
@@ -38,6 +39,8 @@ export default function StockExchangeComplianceModel() {
       setMessage("Please provide option, name, date and a file.");
       return;
     }
+    setUploading(true);
+
     setUploading(true);
 
     try {

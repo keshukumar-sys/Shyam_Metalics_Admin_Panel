@@ -10,6 +10,7 @@ export default function EnvironmentModel() {
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [list, setList] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/environment`;
 
@@ -38,6 +39,8 @@ export default function EnvironmentModel() {
       setMessage("Please provide name, date and a file.");
       return;
     }
+
+    setUploading(true);
 
     try {
       const formData = new FormData();

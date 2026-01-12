@@ -10,6 +10,7 @@ export default function SebiOnlineDisputeModel() {
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [list, setList] = useState([]);
+  const [uploading, setUploading] = useState(false);
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/sebi`;
 
@@ -39,12 +40,14 @@ export default function SebiOnlineDisputeModel() {
       return;
     }
 
+    setUploading(true);
+
     try {
       const formData = new FormData();
       formData.append("sebi_name", sebiName);
       formData.append("sebi_date", sebiDate);
       // send file under both keys to match common multer setups
-      formData.append("file", file);
+      formData.append("sebi_file", file);
   
 
       const res = await fetch(`${API_BASE}/add_sebi`, {
