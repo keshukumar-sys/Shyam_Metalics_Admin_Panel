@@ -16,3 +16,11 @@ export const authHeader = () => {
   const t = getToken();
   return t ? { Authorization: `Bearer ${t}` } : {};
 };
+
+// For FormData requests (file uploads), only include Authorization header
+// Don't set Content-Type - let browser set it as multipart/form-data
+export const authHeaderForFormData = () => {
+  const t = getToken();
+  return t ? { Authorization: `Bearer ${t}` } : {};
+};
+

@@ -10,6 +10,10 @@ export default function TdsDeclarationModel() {
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [list, setList] = useState([]);
+  const [editId, setEditId] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editFile, setEditFile] = useState(null);
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/tds`; 
 
@@ -83,6 +87,48 @@ export default function TdsDeclarationModel() {
     }
   };
 
+  const handleEdit = (row) => {
+    setEditId(row._id);
+    setEditName(row.tds_name);
+    setEditDate(row.tds_date);
+  };
+
+  const handleUpdateSubmit = async (e) => {
+    e.preventDefault();
+    if (!editName || !editDate) {
+      alert("Please fill all fields");
+      return;
+    }
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("tds_name", editName);
+      formData.append("tds_date", editDate);
+      if (editFile) formData.append("tds_file", editFile);
+
+      const headers = {};
+      const token = localStorage.getItem("shyam_token");
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`${API_BASE}/update_tds/${editId}`, {
+        method: "PUT",
+        headers: headers,
+        body: formData,
+      });
+      const json = await res.json();
+      if (!res.ok) return alert(json.message || "Update failed");
+      setEditId(null);
+      fetchList();
+    } catch (e) {
+      console.error(e);
+      alert("Network error: " + e.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="container" style={{ padding: 16 }}>
       <h2>TDS Declaration</h2>
@@ -129,12 +175,37 @@ export default function TdsDeclarationModel() {
             actions={(row) => (
                 <>
                   <a className="btn-sm" href={row.tds_file || '#'} target="_blank" rel="noreferrer">Open</a>
-                  <button style={{ marginLeft: 8 }} className="btn-sm" onClick={() => handleDelete(row._id)}>Delete</button>
+                  <button style={{ marginLeft: 4, marginRight: 4 }} className="btn-sm" onClick={() => handleEdit(row)}>Edit</button>
+                  <button style={{ marginLeft: 4 }} className="btn-sm" onClick={() => handleDelete(row._id)}>Delete</button>
                 </>
               )}
           />
         </div>
       </section>
+
+      {editId && (
+        <div style={{ marginTop: 24, padding: 16, border: "1px solid #ddd", borderRadius: 8 }}>
+          <h3>Edit TDS</h3>
+          <form onSubmit={handleUpdateSubmit} style={{ display: "grid", gap: 8, maxWidth: 640 }}>
+            <label>
+              Name
+              <input className="form-input" value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </label>
+            <label>
+              Date
+              <input className="form-input" type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
+            </label>
+            <label>
+              File (optional)
+              <input className="form-input" type="file" onChange={(e) => setEditFile(e.target.files && e.target.files[0])} />
+            </label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button type="submit" className="btn">Update</button>
+              <button type="button" className="btn" style={{background: '#999'}} onClick={() => setEditId(null)}>Cancel</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

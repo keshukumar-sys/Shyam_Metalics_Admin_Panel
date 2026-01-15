@@ -31,6 +31,12 @@ const Navbar = () => {
         <NavLink to="/sebi-dispute" className="nav-link">SEBI</NavLink>
         <NavLink to="/stock-exchange" className="nav-link">Stock Exchange</NavLink>
         <NavLink to="/tds" className="nav-link">TDS</NavLink>
+        {/* <Navlink to="/disclosures" className="nav-link">Disclosures</NavLink> */}
+        <NavLink to="/event-stories" className="nav-link">Event Stories</NavLink>
+        <NavLink to="/event-news" className="nav-link">Event News</NavLink>
+        <NavLink to="/award" className="nav-link">Awards</NavLink>
+        <NavLink to="/blog" className="nav-link">Blogs</NavLink>
+        <NavLink to="/disclosures" className="nav-link">Disclosures</NavLink>
       </div>
 
       <div className="nav-right">

@@ -11,6 +11,10 @@ export default function InvestorInformationModel() {
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [list, setList] = useState([]);
+  const [editId, setEditId] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editDate, setEditDate] = useState("");
+  const [editFile, setEditFile] = useState(null);
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/investor-information`;
 
   useEffect(() => {
@@ -86,6 +90,48 @@ export default function InvestorInformationModel() {
     }
   };
 
+  const handleEdit = (row) => {
+    setEditId(row._id);
+    setEditName(row.name);
+    setEditDate(row.date);
+  };
+
+  const handleUpdateSubmit = async (e) => {
+    e.preventDefault();
+    if (!editName || !editDate) {
+      alert("Please fill all fields");
+      return;
+    }
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("name", editName);
+      formData.append("date", editDate);
+      if (editFile) formData.append("file", editFile);
+
+      const headers = {};
+      const token = localStorage.getItem("shyam_token");
+      if (token) {
+        headers.Authorization = `Bearer ${token}`;
+      }
+
+      const res = await fetch(`${API_BASE}/update_investor_information/${editId}`, {
+        method: "PUT",
+        headers: headers,
+        body: formData,
+      });
+      const json = await res.json();
+      if (!res.ok) return alert(json.message || "Update failed");
+      setEditId(null);
+      fetchList(option);
+    } catch (e) {
+      console.error(e);
+      alert("Network error: " + e.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const options = ["Credit Rating", "Postal Ballot", "AGM"];
 
   return (
@@ -133,10 +179,37 @@ export default function InvestorInformationModel() {
           ]}
           data={list}
           actions={(row) => (
-            <button className="btn-sm" onClick={() => handleDelete(row._id)}>Delete</button>
+            <>
+              <button className="btn-sm" style={{marginRight: 8}} onClick={() => handleEdit(row)}>Edit</button>
+              <button className="btn-sm" onClick={() => handleDelete(row._id)}>Delete</button>
+            </>
           )}
         />
       </section>
+
+      {editId && (
+        <div style={{ marginTop: 24, padding: 16, border: "1px solid #ddd", borderRadius: 8 }}>
+          <h3>Edit Detail</h3>
+          <form onSubmit={handleUpdateSubmit} style={{ display: "grid", gap: 8, maxWidth: 640 }}>
+            <label>
+              Name
+              <input value={editName} onChange={(e) => setEditName(e.target.value)} />
+            </label>
+            <label>
+              Date
+              <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
+            </label>
+            <label>
+              File (optional)
+              <input type="file" onChange={(e) => setEditFile(e.target.files && e.target.files[0])} />
+            </label>
+            <div style={{ display: "flex", gap: 8 }}>
+              <button type="submit">Update</button>
+              <button type="button" onClick={() => setEditId(null)}>Cancel</button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

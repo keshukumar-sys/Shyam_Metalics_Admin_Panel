@@ -20,6 +20,11 @@ import FinancialModel from "./pages/FinancialModel";
 import FamiliarModel from "./pages/FamiliarModel";
 import EnvironmentModel from "./pages/EnvironmentModel";
 import CorporateModel from "./pages/CorporateModel";
+import BlogModel from "./pages/BlogModel";
+import AwardModel from "./pages/AwardModel";
+import EventNews from "./pages/EventNews";
+import EventStories from "./pages/EventStories";
+import DisclosuresModel from "./pages/DisclosuresModel";
 
 function App() {
   return (
@@ -59,6 +64,11 @@ function App() {
           <Route path="/familiar" element={<FamiliarModel />} />
           <Route path="/environment" element={<EnvironmentModel />} />
           <Route path="/corporate" element={<CorporateModel />} />
+          <Route path="/blog" element={<BlogModel />} />
+          <Route path="/award" element={<AwardModel />} />
+          <Route path="/event-news" element={<EventNews />} />
+          <Route path="/event-stories" element={<EventStories />} />
+          <Route path="/disclosures" element={<DisclosuresModel />} />
         </Route>
       </Routes>
   );
