@@ -48,7 +48,7 @@ export default function InvestorAnalystModel() {
       formData.append("investor_analyst_name", name);
       formData.append("investor_analyst_date", date);
       // some backends expect generic 'file' key as well
-      formData.append("file", file);
+      formData.append("investor_analyst_file", file);
 
       const res = await fetch(`${API_BASE}/add_investor_analyst`, {
         method: "POST",
