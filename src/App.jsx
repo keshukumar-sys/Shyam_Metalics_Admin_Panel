@@ -25,6 +25,9 @@ import AwardModel from "./pages/AwardModel";
 import EventNews from "./pages/EventNews";
 import EventStories from "./pages/EventStories";
 import DisclosuresModel from "./pages/DisclosuresModel";
+import ContactModel from "./pages/ContactFormInquiries";
+import ContactFormInquiries from "./pages/ContactFormInquiries";
+import JobsCreation from "./pages/JobCreation";
 
 function App() {
   return (
@@ -69,6 +72,8 @@ function App() {
           <Route path="/event-news" element={<EventNews />} />
           <Route path="/event-stories" element={<EventStories />} />
           <Route path="/disclosures" element={<DisclosuresModel />} />
+          <Route path="/inquiries" element={<ContactFormInquiries/>} />
+          <Route path="/jobs" element={<JobsCreation/>}/>
         </Route>
       </Routes>
   );
