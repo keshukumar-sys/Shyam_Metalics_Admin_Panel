@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import axios from "axios";
 import { Trash2, Edit, X } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3002";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://shyam-metalics-backend-1.onrender.com";
 const API_URL = `${API_BASE}/inquiries`;
 
 export default function ContactFormInquiries() {
