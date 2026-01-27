@@ -71,15 +71,15 @@ const JobsCreation = () => {
             </div>
           </div>
           <div className="flex items-center gap-6">
-             <div className="flex flex-col items-end">
-                <span className="text-lg font-bold text-indigo-600">{totalApps}</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase">Candidates</span>
-             </div>
-             <div className="h-8 w-[1px] bg-slate-100" />
-             <div className="flex flex-col items-end">
-                <span className="text-lg font-bold text-slate-900">{jobs.length}</span>
-                <span className="text-[10px] font-bold text-slate-400 uppercase">Live Jobs</span>
-             </div>
+            <div className="flex flex-col items-end">
+              <span className="text-lg font-bold text-indigo-600">{totalApps}</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase">Candidates</span>
+            </div>
+            <div className="h-8 w-[1px] bg-slate-100" />
+            <div className="flex flex-col items-end">
+              <span className="text-lg font-bold text-slate-900">{jobs.length}</span>
+              <span className="text-[10px] font-bold text-slate-400 uppercase">Live Jobs</span>
+            </div>
           </div>
         </div>
       </header>
@@ -114,7 +114,7 @@ const JobsCreation = () => {
               <button disabled={isSubmitting} className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl shadow-xl shadow-indigo-200 transition-all transform active:scale-95 disabled:opacity-50">
                 {isSubmitting ? "Syncing..." : "Publish Vacancy"}
               </button>
-              {editId && <button onClick={() => {setEditId(null); setFormData({title:"",description:"",location:"",salary:"",img:null})}} className="w-full text-xs font-bold text-slate-400 hover:text-red-500 transition-colors">Cancel Editing</button>}
+              {editId && <button onClick={() => { setEditId(null); setFormData({ title: "", description: "", location: "", salary: "", img: null }) }} className="w-full text-xs font-bold text-slate-400 hover:text-red-500 transition-colors">Cancel Editing</button>}
             </form>
           </div>
         </div>
@@ -122,13 +122,13 @@ const JobsCreation = () => {
         {/* Minimalist Cards List */}
         <div className="lg:col-span-8">
           <div className="flex items-center justify-between mb-8">
-             <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Live Opportunities</h3>
-             <Search className="w-4 h-4 text-slate-300 cursor-pointer" />
+            <h3 className="text-sm font-black uppercase tracking-widest text-slate-400">Live Opportunities</h3>
+            <Search className="w-4 h-4 text-slate-300 cursor-pointer" />
           </div>
 
           <div className="space-y-6">
             {jobs.map((job) => (
-              <motion.div 
+              <motion.div
                 key={job._id}
                 layout
                 className="bg-white border border-slate-100 rounded-[2rem] p-6 shadow-sm hover:shadow-xl hover:shadow-slate-200/40 transition-all duration-500 group"
@@ -136,7 +136,7 @@ const JobsCreation = () => {
                 <div className="flex flex-col sm:flex-row gap-8 items-center">
                   {/* Fixed Small Thumbnail */}
                   <div className="w-20 h-20 rounded-2xl bg-slate-50 overflow-hidden flex-shrink-0 grayscale group-hover:grayscale-0 transition-all duration-500 border border-slate-50">
-                    {job.img ? <img src={job.img} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-slate-200"><Briefcase size={24}/></div>}
+                    {job.img ? <img src={job.img} className="w-[400px] h-[400px]" style={{ width: "80%", height: "200px" }} /> : <div className="w-full h-full flex items-center justify-center text-slate-200"><Briefcase size={24} /></div>}
                   </div>
 
                   <div className="flex-1 text-center sm:text-left">
@@ -150,12 +150,12 @@ const JobsCreation = () => {
                         </div>
                       </div>
                       <div className="flex gap-2 self-center sm:self-start opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <button onClick={() => { setEditId(job._id); setFormData(job); window.scrollTo({top:0, behavior:'smooth'}) }} className="p-2.5 bg-slate-50 text-slate-400 hover:text-indigo-600 rounded-xl transition-all"><Edit3 size={16}/></button>
-                        <button onClick={async () => { if(confirm("Remove?")) { await axios.delete(`${API_BASE}/jobs/delete/${job._id}`); fetchJobs(); } }} className="p-2.5 bg-slate-50 text-slate-400 hover:text-red-500 rounded-xl transition-all"><Trash2 size={16}/></button>
+                        <button onClick={() => { setEditId(job._id); setFormData(job); window.scrollTo({ top: 0, behavior: 'smooth' }) }} className="p-2.5 bg-slate-50 text-slate-400 hover:text-indigo-600 rounded-xl transition-all"><Edit3 size={16} /></button>
+                        <button onClick={async () => { if (confirm("Remove?")) { await axios.delete(`${API_BASE}/jobs/delete/${job._id}`); fetchJobs(); } }} className="p-2.5 bg-slate-50 text-slate-400 hover:text-red-500 rounded-xl transition-all"><Trash2 size={16} /></button>
                       </div>
                     </div>
-                    
-                    <button 
+
+                    <button
                       onClick={() => setOpenJobId(openJobId === job._id ? null : job._id)}
                       className="mt-6 flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.15em] text-slate-300 hover:text-indigo-600 transition-colors mx-auto sm:mx-0"
                     >
@@ -167,24 +167,122 @@ const JobsCreation = () => {
 
                 <AnimatePresence>
                   {openJobId === job._id && (
-                    <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
-                      <div className="mt-8 pt-8 border-t border-slate-50 grid gap-3">
-                        {applications[job._id]?.length > 0 ? applications[job._id].map(app => (
-                          <div key={app._id} className="flex items-center justify-between p-4 bg-slate-50/50 rounded-2xl hover:bg-slate-50 transition-colors">
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[10px] font-bold shadow-sm">{app.name.charAt(0)}</div>
-                              <div>
-                                <p className="text-xs font-bold">{app.name}</p>
-                                <p className="text-[10px] text-slate-400">{app.email}</p>
-                              </div>
-                            </div>
-                            <a href={`/uploads/${app.resume}`} target="_blank" className="text-[10px] font-black uppercase tracking-tighter bg-white px-4 py-2 rounded-lg border border-slate-100 shadow-sm hover:bg-black hover:text-white transition-all">Download CV</a>
-                          </div>
-                        )) : <div className="text-center py-6 text-xs text-slate-300 font-bold uppercase tracking-widest">No candidates yet</div>}
+                    <motion.div
+                      initial={{ height: 0, opacity: 0 }}
+                      animate={{ height: "auto", opacity: 1 }}
+                      exit={{ height: 0, opacity: 0 }}
+                      className="overflow-hidden"
+                    >
+
+
+                      <div className="p-2">
+
+
+                        {applications[job._id]?.length > 0 ? (
+
+
+                          // <table className="w-[90%] border text-sm">
+                          //   <thead className="bg-slate-100">
+                          //     <tr>
+                          //       <th className="border p-2">Name</th>
+                          //       <th className="border p-2">Email</th>
+                          //       <th className="border p-2">Mobile</th>
+                          //       <th className="border p-2">Experience</th>
+                          //       <th className="border p-2">Company</th>
+                          //       <th className="border p-2">Designation</th>
+                          //       <th className="border p-2">CTC</th>
+                          //       <th className="border p-2">Expected</th>
+                          //       <th className="border p-2">Location</th>
+                          //       <th className="border p-2">Resume</th>
+                          //     </tr>
+                          //   </thead>
+
+
+                          //   <tbody>
+                          //     {applications[job._id].map((app) => (
+                          //       <tr key={app._id} className="text-center">
+                          //         <td className="border p-2">{app.fullName}</td>
+                          //         <td className="border p-2">{app.email}</td>
+                          //         <td className="border p-2">{app.mobile}</td>
+                          //         <td className="border p-2">{app.totalExperience}</td>
+                          //         <td className="border p-2">{app.currentCompany}</td>
+                          //         <td className="border p-2">{app.designation}</td>
+                          //         <td className="border p-2">{app.currentCTC}</td>
+                          //         <td className="border p-2">{app.expectedCTC}</td>
+                          //         <td className="border p-2">{app.preferredLocation}</td>
+                          //         <td className="border p-2">
+                          //           <a
+                          //             href={`${API_BASE}/${app.resume}`}
+                          //             target="_blank"
+                          //             className="text-indigo-600 underline"
+                          //           >
+                          //             Download
+                          //           </a>
+                          //         </td>
+                          //       </tr>
+                          //     ))}
+                          //   </tbody>
+
+
+                          // </table>
+                          <table className="w-[60vw] mx-auto border text-sm">
+                            <thead className="bg-slate-100">
+                              <tr>
+                                <th className="border">Name</th>
+                                <th className="border">Email</th>
+                                <th className="border">Mobile</th>
+                                <th className="border">Experience</th>
+                                <th className="border">Company</th>
+                                <th className="border">Designation</th>
+                                <th className="border">CTC</th>
+                                <th className="border">Expected</th>
+                                <th className="border">Location</th>
+                                <th className="border">Resume</th>
+                              </tr>
+                            </thead>
+
+                            <tbody>
+                              {applications[job._id].map((app) => (
+                                <tr key={app._id} className="text-center">
+                                  <td className="border">{app.fullName}</td>
+                                  <td className="border">{app.email}</td>
+                                  <td className="border">{app.mobile}</td>
+                                  <td className="border">{app.totalExperience}</td>
+                                  <td className="border">{app.currentCompany}</td>
+                                  <td className="border">{app.designation}</td>
+                                  <td className="border">{app.currentCTC}</td>
+                                  <td className="border">{app.expectedCTC}</td>
+                                  <td className="border">{app.preferredLocation}</td>
+                                  <td className="border">
+                                    <a
+                                      href={`${API_BASE}/${app.resume}`}
+                                      target="_blank"
+                                      rel="noreferrer"
+                                      className="text-indigo-600 underline"
+                                    >
+                                      Download
+                                    </a>
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+
+
+
+                        ) : (
+                          <p className="text-center text-gray-400">No Applicants</p>
+                        )}
+
+
                       </div>
+
+
                     </motion.div>
                   )}
                 </AnimatePresence>
+
+
               </motion.div>
             ))}
           </div>
