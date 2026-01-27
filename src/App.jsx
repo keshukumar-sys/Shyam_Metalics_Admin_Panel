@@ -28,6 +28,7 @@ import DisclosuresModel from "./pages/DisclosuresModel";
 import ContactModel from "./pages/ContactFormInquiries";
 import ContactFormInquiries from "./pages/ContactFormInquiries";
 import JobsCreation from "./pages/JobCreation";
+import JobApplication from "./pages/JobApplication";
 
 function App() {
   return (
@@ -74,6 +75,7 @@ function App() {
           <Route path="/disclosures" element={<DisclosuresModel />} />
           <Route path="/inquiries" element={<ContactFormInquiries/>} />
           <Route path="/jobs" element={<JobsCreation/>}/>
+          <Route path="/applications" element={<JobApplication/>}/>
         </Route>
       </Routes>
   );
