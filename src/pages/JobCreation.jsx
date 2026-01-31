@@ -8,7 +8,7 @@ import {
   Upload, Search
 } from "lucide-react";
 
-const API_BASE = import.meta.env.VITE_API_BASE || "https://shyam-metalics-backend-1.onrender.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://shyam-metalics-backend-kzr8.onrender.com";
 
 const JobsCreation = () => {
   const [jobs, setJobs] = useState([]);
