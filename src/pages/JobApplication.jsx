@@ -1,224 +1,162 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { motion } from "framer-motion";
-import {
-    Search,
-    Trash2,
-    FileText,
-    Edit3,
-    Save,
-    X
-} from "lucide-react";
+import { Edit3, Save, X } from "lucide-react";
 
-const API_BASE =
-    import.meta.env.VITE_API_BASE ||
-    "http://localhost:3002";
+const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3002";
 
-const JobApplication = () => {
+export default function AdminJobs() {
+  const [jobs, setJobs] = useState([]);
+  const [editId, setEditId] = useState(null);
+  const [editJob, setEditJob] = useState({});
 
-    const [applications, setApplications] = useState([]);
-    const [search, setSearch] = useState("");
-    const [editId, setEditId] = useState(null);
-    const [status, setStatus] = useState("");
+  useEffect(() => {
+    fetchJobs();
+  }, []);
 
-    // ============================
-    // FETCH APPLICATIONS
-    // ============================
-    const fetchApplications = async () => {
-        try {
-            const res = await axios.get(`${API_BASE}/jobs/applications/all`);
-            console.log("Applications fetched:", res.data);
-            setApplications(res.data);
-        } catch (err) {
-            console.error("Error fetching applications:", err);
-        }
-    };
+  const fetchJobs = async () => {
+    try {
+      const res = await axios.get(`${API_BASE}/jobs/all`);
+      setJobs(res.data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
-    useEffect(() => {
-        fetchApplications();
-    }, []);
+  const handleEdit = (job) => {
+    setEditId(job._id);
+    setEditJob({
+      title: job.title,
+      description: job.description,
+      location: job.location,
+      salary: job.salary,
+      img: null,
+    });
+  };
 
-    // ============================
-    // DELETE
-    // ============================
-    const handleDelete = async (id) => {
-        console.log("in the handle delete")
-        if (!window.confirm("Delete this application?")) return;
-        try {
-            const resp =  await axios.delete(`${API_BASE}/jobs/applications/delete/${id}`);
-            console.log(resp);
-            fetchApplications();
-        } catch (err) {
-            console.error(err);
-        }
-    };
+  const handleUpdate = async (id) => {
+    try {
+      const formData = new FormData();
+      formData.append("title", editJob.title);
+      formData.append("description", editJob.description);
+      formData.append("location", editJob.location);
+      formData.append("salary", editJob.salary);
+      if (editJob.img) formData.append("img", editJob.img);
 
-    // ============================
-    // UPDATE STATUS
-    // ============================
-    const handleUpdate = async (id) => {
-        try {
-            await axios.put(`${API_BASE}/applications/update/${id}`, {
-                status,
-            });
-            setEditId(null);
-            setStatus("");
-            fetchApplications();
-        } catch (err) {
-            console.error(err);
-        }
-    };
+      const res = await axios.put(`${API_BASE}/jobs/update/${id}`, formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-    // ============================
-    // SEARCH FILTER
-    // ============================
-    const filteredApplications = applications.filter(app =>
-        app.fullName?.toLowerCase().includes(search.toLowerCase()) ||
-        app.email?.toLowerCase().includes(search.toLowerCase()) ||
-        app.position?.toLowerCase().includes(search.toLowerCase())
-    );
+      console.log(res.data);
+      setEditId(null);
+      fetchJobs();
+    } catch (err) {
+      console.error("Update error:", err);
+    }
+  };
 
-    return (
-        <div className="min-h-screen bg-slate-50 p-10">
+  return (
+    <div className="p-8">
+      <h2 className="text-2xl font-bold mb-6">Jobs</h2>
 
-            {/* HEADER */}
-            <div className="flex justify-between items-center mb-8">
-                <h1 className="text-2xl font-bold">Job Applications</h1>
-
-                <div className="relative">
-                    <Search className="absolute left-3 top-3 text-gray-400" size={16} />
-                    <input
-                        className="pl-10 pr-4 py-2 rounded-lg border"
-                        placeholder="Search applicant..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                    />
-                </div>
-            </div>
-
-            {/* TABLE */}
-            <div className="bg-white rounded-xl shadow overflow-x-auto">
-
-                <table className="w-full text-sm">
-                    <thead className="bg-slate-100">
-                        <tr>
-                            <th className="p-3 border">Name</th>
-                            <th className="p-3 border">Email</th>
-                            <th className="p-3 border">Mobile</th>
-                            <th className="p-3 border">Experience</th>
-                            <th className="p-3 border">Position</th>
-                            <th className="p-3 border">Status</th>
-                            <th className="p-3 border">Resume</th>
-                            <th className="p-3 border">Actions</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {filteredApplications.map((app) => (
-                            <motion.tr
-                                key={app._id}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                className="text-center hover:bg-slate-50"
-                            >
-
-                                <td className="border p-2">{app.fullName}</td>
-                                <td className="border p-2">{app.email}</td>
-                                <td className="border p-2">{app.mobile}</td>
-                                <td className="border p-2">{app.totalExperience}</td>
-                                <td className="border p-2">{app.position}</td>
-
-                                {/* STATUS */}
-                                <td className="border p-2">
-                                    {editId === app._id ? (
-                                        <select
-                                            className="border rounded px-2 py-1"
-                                            value={status}
-                                            onChange={(e) => setStatus(e.target.value)}
-                                        >
-                                            <option value="">Select</option>
-                                            <option value="Applied">Applied</option>
-                                            <option value="Shortlisted">Shortlisted</option>
-                                            <option value="Interview">Interview</option>
-                                            <option value="Rejected">Rejected</option>
-                                            <option value="Hired">Hired</option>
-                                        </select>
-                                    ) : (
-                                        <span className="font-medium">
-                                            {app.status || "Applied"}
-                                        </span>
-                                    )}
-                                </td>
-
-                                {/* RESUME */}
-                                <td className="border p-2">
-                                    <a
-                                        href={`${app.resume}`}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="text-indigo-600 underline flex items-center justify-center gap-1"
-                                    >
-                                        <FileText size={14} />
-                                        View
-                                    </a>
-                                </td>
-
-                                {/* ACTIONS */}
-                                <td className="border p-2">
-                                    <div className="flex justify-center gap-3">
-
-                                        {editId === app._id ? (
-                                            <>
-                                                <button
-                                                    onClick={() => handleUpdate(app._id)}
-                                                    className="text-green-600"
-                                                >
-                                                    <Save size={16} />
-                                                </button>
-
-                                                <button
-                                                    onClick={() => setEditId(null)}
-                                                    className="text-gray-500"
-                                                >
-                                                    <X size={16} />
-                                                </button>
-                                            </>
-                                        ) : (
-                                            <button
-                                                onClick={() => {
-                                                    setEditId(app._id);
-                                                    setStatus(app.status || "");
-                                                }}
-                                                className="text-blue-600"
-                                            >
-                                                <Edit3 size={16} />
-                                            </button>
-                                        )}
-
-                                        <button
-                                            onClick={() => handleDelete(app._id)}
-                                            className="text-red-500"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-
-                                    </div>
-                                </td>
-
-                            </motion.tr>
-                        ))}
-                    </tbody>
-                </table>
-
-                {filteredApplications.length === 0 && (
-                    <p className="text-center py-10 text-gray-400">
-                        No Applications Found
-                    </p>
+      <table className="w-full border-collapse border">
+        <thead className="bg-gray-100">
+          <tr>
+            <th className="p-2 border">Title</th>
+            <th className="p-2 border">Description</th>
+            <th className="p-2 border">Location</th>
+            <th className="p-2 border">Salary</th>
+            <th className="p-2 border">Image</th>
+            <th className="p-2 border">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {jobs.map((job) => (
+            <tr key={job._id} className="text-center">
+              <td className="border p-2">
+                {editId === job._id ? (
+                  <input
+                    type="text"
+                    value={editJob.title}
+                    onChange={(e) => setEditJob({ ...editJob, title: e.target.value })}
+                  />
+                ) : (
+                  job.title
                 )}
+              </td>
 
-            </div>
-        </div>
-    );
-};
+              <td className="border p-2">
+                {editId === job._id ? (
+                  <textarea
+                    value={editJob.description}
+                    onChange={(e) =>
+                      setEditJob({ ...editJob, description: e.target.value })
+                    }
+                    rows={2}
+                  />
+                ) : (
+                  job.description
+                )}
+              </td>
 
-export default JobApplication;
+              <td className="border p-2">
+                {editId === job._id ? (
+                  <input
+                    type="text"
+                    value={editJob.location}
+                    onChange={(e) => setEditJob({ ...editJob, location: e.target.value })}
+                  />
+                ) : (
+                  job.location
+                )}
+              </td>
+
+              <td className="border p-2">
+                {editId === job._id ? (
+                  <input
+                    type="number"
+                    value={editJob.salary}
+                    onChange={(e) => setEditJob({ ...editJob, salary: e.target.value })}
+                  />
+                ) : (
+                  job.salary
+                )}
+              </td>
+
+              <td className="border p-2">
+                {editId === job._id ? (
+                  <input
+                    type="file"
+                    onChange={(e) => setEditJob({ ...editJob, img: e.target.files[0] })}
+                  />
+                ) : job.img ? (
+                  <a href={job.img} target="_blank" rel="noreferrer">
+                    View
+                  </a>
+                ) : (
+                  "-"
+                )}
+              </td>
+
+              <td className="border p-2 flex justify-center gap-2">
+                {editId === job._id ? (
+                  <>
+                    <button onClick={() => handleUpdate(job._id)} className="text-green-600">
+                      <Save size={16} />
+                    </button>
+                    <button onClick={() => setEditId(null)} className="text-gray-500">
+                      <X size={16} />
+                    </button>
+                  </>
+                ) : (
+                  <button onClick={() => handleEdit(job)} className="text-blue-600">
+                    <Edit3 size={16} />
+                  </button>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
