@@ -29,6 +29,7 @@ import ContactModel from "./pages/ContactFormInquiries";
 import ContactFormInquiries from "./pages/ContactFormInquiries";
 import JobsCreation from "./pages/JobCreation";
 import JobApplication from "./pages/JobApplication";
+import DistributorPage from "./pages/distributorPage";
 
 function App() {
   return (
@@ -76,6 +77,7 @@ function App() {
           <Route path="/inquiries" element={<ContactFormInquiries/>} />
           <Route path="/jobs" element={<JobsCreation/>}/>
           <Route path="/applications" element={<JobApplication/>}/>
+          <Route path="/distributor" element={<DistributorPage/>}/>
         </Route>
       </Routes>
   );
