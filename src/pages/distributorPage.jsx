@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Pencil, Trash2, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
 
-const API_URL = "http://localhost:3002/distributors";
+const API_URL =  `${import.meta.env.VITE_API_BASE}/distributors` || "http://localhost:3002/distributors";
 
 const AdminDistributor = () => {
   // --- State Management ---
