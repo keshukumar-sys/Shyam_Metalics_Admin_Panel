@@ -1,162 +1,246 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Edit3, Save, X } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3002";
+const ITEMS_PER_PAGE = 8;
 
-export default function AdminJobs() {
-  const [jobs, setJobs] = useState([]);
-  const [editId, setEditId] = useState(null);
-  const [editJob, setEditJob] = useState({});
+export default function AdminApplications() {
+  const [applications, setApplications] = useState([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedApp, setSelectedApp] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    fetchJobs();
+    fetchApplications();
   }, []);
 
-  const fetchJobs = async () => {
+  // ================= FETCH =================
+  const fetchApplications = async () => {
     try {
-      const res = await axios.get(`${API_BASE}/jobs/all`);
-      setJobs(res.data);
+      const res = await axios.get(
+        `${API_BASE}/jobs/applications/all`
+      );
+      setApplications(res.data);
     } catch (err) {
-      console.error(err);
+      console.error("Fetch applications error:", err);
     }
   };
 
-  const handleEdit = (job) => {
-    setEditId(job._id);
-    setEditJob({
-      title: job.title,
-      description: job.description,
-      location: job.location,
-      salary: job.salary,
-      img: null,
-    });
+  // ================= DELETE =================
+  const deleteApplication = async (id) => {
+    if (!window.confirm("Delete this application?")) return;
+
+    try {
+      await axios.delete(
+        `${API_BASE}/jobs/applications/delete/${id}`
+      );
+      fetchApplications();
+    } catch (err) {
+      console.error("Delete error:", err);
+    }
   };
 
-  const handleUpdate = async (id) => {
+  // ================= UPDATE =================
+  const updateApplication = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
     try {
-      const formData = new FormData();
-      formData.append("title", editJob.title);
-      formData.append("description", editJob.description);
-      formData.append("location", editJob.location);
-      formData.append("salary", editJob.salary);
-      if (editJob.img) formData.append("img", editJob.img);
+      await axios.put(
+        `${API_BASE}/jobs/applications/update/${selectedApp._id}`,
+        {
+          status: selectedApp.status,
+          adminRemark: selectedApp.adminRemark,
+        }
+      );
 
-      const res = await axios.put(`${API_BASE}/jobs/update/${id}`, formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      console.log(res.data);
-      setEditId(null);
-      fetchJobs();
+      setSelectedApp(null);
+      fetchApplications();
     } catch (err) {
       console.error("Update error:", err);
+    } finally {
+      setLoading(false);
     }
   };
+
+  // ================= PAGINATION =================
+  const totalPages = Math.ceil(applications.length / ITEMS_PER_PAGE);
+  const paginatedData = applications.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="p-8">
-      <h2 className="text-2xl font-bold mb-6">Jobs</h2>
+      <h1 className="text-2xl font-bold mb-6">
+        Job Applications ({applications.length})
+      </h1>
 
-      <table className="w-full border-collapse border">
-        <thead className="bg-gray-100">
-          <tr>
-            <th className="p-2 border">Title</th>
-            <th className="p-2 border">Description</th>
-            <th className="p-2 border">Location</th>
-            <th className="p-2 border">Salary</th>
-            <th className="p-2 border">Image</th>
-            <th className="p-2 border">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {jobs.map((job) => (
-            <tr key={job._id} className="text-center">
-              <td className="border p-2">
-                {editId === job._id ? (
-                  <input
-                    type="text"
-                    value={editJob.title}
-                    onChange={(e) => setEditJob({ ...editJob, title: e.target.value })}
-                  />
-                ) : (
-                  job.title
-                )}
-              </td>
-
-              <td className="border p-2">
-                {editId === job._id ? (
-                  <textarea
-                    value={editJob.description}
-                    onChange={(e) =>
-                      setEditJob({ ...editJob, description: e.target.value })
-                    }
-                    rows={2}
-                  />
-                ) : (
-                  job.description
-                )}
-              </td>
-
-              <td className="border p-2">
-                {editId === job._id ? (
-                  <input
-                    type="text"
-                    value={editJob.location}
-                    onChange={(e) => setEditJob({ ...editJob, location: e.target.value })}
-                  />
-                ) : (
-                  job.location
-                )}
-              </td>
-
-              <td className="border p-2">
-                {editId === job._id ? (
-                  <input
-                    type="number"
-                    value={editJob.salary}
-                    onChange={(e) => setEditJob({ ...editJob, salary: e.target.value })}
-                  />
-                ) : (
-                  job.salary
-                )}
-              </td>
-
-              <td className="border p-2">
-                {editId === job._id ? (
-                  <input
-                    type="file"
-                    onChange={(e) => setEditJob({ ...editJob, img: e.target.files[0] })}
-                  />
-                ) : job.img ? (
-                  <a href={job.img} target="_blank" rel="noreferrer">
-                    View
-                  </a>
-                ) : (
-                  "-"
-                )}
-              </td>
-
-              <td className="border p-2 flex justify-center gap-2">
-                {editId === job._id ? (
-                  <>
-                    <button onClick={() => handleUpdate(job._id)} className="text-green-600">
-                      <Save size={16} />
-                    </button>
-                    <button onClick={() => setEditId(null)} className="text-gray-500">
-                      <X size={16} />
-                    </button>
-                  </>
-                ) : (
-                  <button onClick={() => handleEdit(job)} className="text-blue-600">
-                    <Edit3 size={16} />
-                  </button>
-                )}
-              </td>
+      {/* ================= TABLE ================= */}
+      <div className="overflow-x-auto">
+        <table className="w-full border text-sm">
+          <thead className="bg-gray-100">
+            <tr>
+              <th className="border p-2">Candidate</th>
+              <th className="border p-2">Job</th>
+              <th className="border p-2">Status</th>
+              <th className="border p-2">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+
+          <tbody>
+            {paginatedData.map((app) => (
+              <tr key={app._id} className="text-center">
+                <td className="border p-2">{app.fullName}</td>
+                <td className="border p-2">
+                  {app.jobId?.title || "Deleted Job"}
+                </td>
+                <td className="border p-2">
+                  <span className="px-2 py-1 rounded bg-gray-200">
+                    {app.status || "Pending"}
+                  </span>
+                </td>
+                <td className="border p-2 space-x-2">
+                  <button
+                    onClick={() => setSelectedApp(app)}
+                    className="px-3 py-1 bg-blue-600 text-white rounded"
+                  >
+                    View
+                  </button>
+                  <button
+                    onClick={() => deleteApplication(app._id)}
+                    className="px-3 py-1 bg-red-600 text-white rounded"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* ================= PAGINATION ================= */}
+      <div className="flex justify-center mt-6 gap-2">
+        <button
+          disabled={currentPage === 1}
+          onClick={() => setCurrentPage((p) => p - 1)}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          Prev
+        </button>
+
+        {[...Array(totalPages)].map((_, i) => (
+          <button
+            key={i}
+            onClick={() => setCurrentPage(i + 1)}
+            className={`px-3 py-1 border rounded ${
+              currentPage === i + 1
+                ? "bg-black text-white"
+                : ""
+            }`}
+          >
+            {i + 1}
+          </button>
+        ))}
+
+        <button
+          disabled={currentPage === totalPages}
+          onClick={() => setCurrentPage((p) => p + 1)}
+          className="px-3 py-1 border rounded disabled:opacity-50"
+        >
+          Next
+        </button>
+      </div>
+
+      {/* ================= POPUP ================= */}
+      {selectedApp && (
+        <div className="fixed inset-0 bg-black/50 flex justify-center items-center">
+          <form
+            onSubmit={updateApplication}
+            className="bg-white p-6 rounded w-full max-w-2xl overflow-y-auto max-h-[90vh]"
+          >
+            <h2 className="text-xl font-bold mb-4">
+              Application Details
+            </h2>
+
+            {/* Candidate Info */}
+            <div className="mb-4">
+              <h3 className="font-semibold mb-2">Candidate</h3>
+              <p><b>Name:</b> {selectedApp.fullName}</p>
+              <p><b>Email:</b> {selectedApp.email}</p>
+              <p><b>Mobile:</b> {selectedApp.mobile}</p>
+              <p><b>Experience:</b> {selectedApp.totalExperience}</p>
+            </div>
+
+            {/* Job Info */}
+            <div className="mb-4">
+              <h3 className="font-semibold mb-2">Job</h3>
+              <p><b>Title:</b> {selectedApp.jobId?.title}</p>
+              <p><b>Location:</b> {selectedApp.jobId?.location}</p>
+              <p><b>CTC:</b> {selectedApp.jobId?.ctc}</p>
+            </div>
+
+            {/* Resume */}
+            <div className="mb-4">
+              <a
+                href={selectedApp.resume}
+                target="_blank"
+                rel="noreferrer"
+                className="text-blue-600 underline"
+              >
+                View Resume
+              </a>
+            </div>
+
+            {/* Status Update */}
+            <select
+              className="border p-2 w-full mb-3"
+              value={selectedApp.status || "Pending"}
+              onChange={(e) =>
+                setSelectedApp({
+                  ...selectedApp,
+                  status: e.target.value,
+                })
+              }
+            >
+              <option>Pending</option>
+              <option>Shortlisted</option>
+              <option>Rejected</option>
+              <option>Selected</option>
+            </select>
+
+            <textarea
+              className="border p-2 w-full mb-4"
+              placeholder="Admin remark"
+              value={selectedApp.adminRemark || ""}
+              onChange={(e) =>
+                setSelectedApp({
+                  ...selectedApp,
+                  adminRemark: e.target.value,
+                })
+              }
+            />
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedApp(null)}
+                className="px-4 py-2 border rounded"
+              >
+                Close
+              </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="px-4 py-2 bg-black text-white rounded"
+              >
+                {loading ? "Updating..." : "Update"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }
