@@ -115,7 +115,7 @@ export default function FinancialModel() {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const res = await fetch(`${API_BASE}/update/${editId}`, {
+      const res = await fetch(`${API_BASE}/update_financial/${editId}`, {
         method: "PUT",
         headers: headers,
         body: formData,
