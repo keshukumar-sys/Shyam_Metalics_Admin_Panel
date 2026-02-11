@@ -30,6 +30,7 @@ import ContactFormInquiries from "./pages/ContactFormInquiries";
 import JobsCreation from "./pages/JobCreation";
 import JobApplication from "./pages/JobApplication";
 import DistributorPage from "./pages/distributorPage";
+import DistributorProvider from "./pages/distributorProvider";
 
 function App() {
   return (
@@ -77,7 +78,8 @@ function App() {
           <Route path="/inquiries" element={<ContactFormInquiries/>} />
           <Route path="/jobs" element={<JobsCreation/>}/>
           <Route path="/applications" element={<JobApplication/>}/>
-          <Route path="/distributor" element={<DistributorPage/>}/>
+          <Route path="/dealer" element={<DistributorPage/>}/>
+          <Route path="/distributor" element={<DistributorProvider/>}/>
         </Route>
       </Routes>
   );
