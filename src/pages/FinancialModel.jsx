@@ -7,6 +7,7 @@ export default function FinancialModel() {
   const [option, setOption] = useState("Annual Report");
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
+  const [heading, setHeading] = useState("");
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
@@ -14,6 +15,7 @@ export default function FinancialModel() {
   const [editId, setEditId] = useState(null);
   const [editName, setEditName] = useState("");
   const [editDate, setEditDate] = useState("");
+  const [editHeading, setEditHeading] = useState("");
   const [editFile, setEditFile] = useState(null);
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/financial`;
@@ -39,8 +41,8 @@ export default function FinancialModel() {
     setMessage("");
     setUploading(true);
 
-    if (!option || !name || !date || !file) {
-      setMessage("Please provide option, name, date and a file.");
+    if (!option || !name || !date) {
+      setMessage("Please provide option, name and date.");
       return;
     }
 
@@ -49,7 +51,8 @@ export default function FinancialModel() {
       formData.append("option", option);
       formData.append("name", name);
       formData.append("date", date);
-      formData.append("file", file);
+      formData.append("heading", heading);
+      if (file) formData.append("file", file);
 
       const res = await fetch(`${API_BASE}/add_detail`, {
         method: "POST",
@@ -65,6 +68,7 @@ export default function FinancialModel() {
       setMessage(result.message || "Detail added");
       setName("");
       setDate("");
+      setHeading("");
       setFile(null);
       fetchList(option);
     } catch (err) {
@@ -94,6 +98,7 @@ export default function FinancialModel() {
     setEditId(row._id);
     setEditName(row.name);
     setEditDate(row.date);
+    setEditHeading(row.heading || "");
   };
 
   const handleUpdateSubmit = async (e) => {
@@ -107,6 +112,7 @@ export default function FinancialModel() {
       const formData = new FormData();
       formData.append("name", editName);
       formData.append("date", editDate);
+      formData.append("heading", editHeading);
       if (editFile) formData.append("file", editFile);
 
       const headers = {};
@@ -137,6 +143,7 @@ export default function FinancialModel() {
     "Financial Annual Report",
     "Financial Of Subsidiaries Company",
     "Financial Results",
+    "Other",
   ];
 
   return (
@@ -166,8 +173,13 @@ export default function FinancialModel() {
         </label>
 
         <label>
-          File
-          <input type="file" onChange={(e) => setFile(e.target.files && e.target.files[0])} />
+          Heading (optional)
+          <input type="text" value={heading} onChange={(e) => setHeading(e.target.value)} placeholder="e.g., Financial Statement" />
+        </label>
+
+        <label>
+          File (optional)
+          <input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files && e.target.files[0])} />
         </label>
 
         <button type="submit" disabled={uploading}>{uploading ? "Uploading..." : "Add detail"}</button>
@@ -180,6 +192,7 @@ export default function FinancialModel() {
           columns={[
             { key: "name", label: "Name" },
             { key: "date", label: "Date" },
+            { key: "heading", label: "Heading" },
             { key: "file", label: "File", render: (r) => (r.file ? <a href={r.file} target="_blank" rel="noreferrer">View</a> : "-") }
           ]}
           data={list}
@@ -205,8 +218,12 @@ export default function FinancialModel() {
               <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
             </label>
             <label>
+              Heading (optional)
+              <input type="text" value={editHeading} onChange={(e) => setEditHeading(e.target.value)} placeholder="e.g., Financial Statement" />
+            </label>
+            <label>
               File (optional)
-              <input type="file" onChange={(e) => setEditFile(e.target.files && e.target.files[0])} />
+              <input type="file" accept=".pdf" onChange={(e) => setEditFile(e.target.files && e.target.files[0])} />
             </label>
             <div style={{ display: "flex", gap: 8 }}>
               <button type="submit">Update</button>

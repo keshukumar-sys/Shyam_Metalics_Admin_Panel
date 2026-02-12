@@ -4,7 +4,9 @@ import DataTable from "../components/DataTable";
 export default function DisclosuresAdmin() {
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
+  const [mainTitle, setMainTitle] = useState("");
   const [file, setFile] = useState(null);
+  const [extraLink, setExtraLink] = useState("");
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [disclosures, setDisclosures] = useState([]);
@@ -12,6 +14,36 @@ export default function DisclosuresAdmin() {
   const [editFields, setEditFields] = useState({});
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/disclosure`;
+
+  const mainTitleOptions = [
+    "Composition of Committees",
+    "Contact Information of Designated Officials – Investor Grievances",
+    "Newspaper Publications",
+    "Criteria of making payments to NEDs",
+    "Statements Dividend Distribution Policy",
+    "Contact Details of KMPs determining Materiality of Events",
+    "Secretarial Compliance Report",
+    "Credit Ratings",
+    "Investor Grievance Redressal",
+    "Familiarization Programme for Independent Directors",
+    "Policy on Related Party Transactions",
+    "Financial Information",
+    "Composition of BOD & Committees",
+    "Terms of Appointment of Independent Directors",
+    "Memorandum of Association and Articles of Association",
+    "Statement of deviation or variation under Reg 32 of SEBI LODR",
+    "Disclosure under Reg 30(8) of SEBI LODR",
+    "Annual Return",
+    "Subsidiaries – Financial Statements",
+    "Stock Exchange Intimations",
+    "Policy for determination of Materiality of Events",
+    "Schedule of Analysts/Investors Meet & Presentations",
+    "Shareholding Pattern",
+    "Policy for determination of Material Subsidiary",
+    "Whistle Blower Policy",
+    "Code of Conduct for BOD & SMP",
+    "Details of Business",
+  ];
 
   useEffect(() => {
     fetchDisclosures();
@@ -33,8 +65,8 @@ export default function DisclosuresAdmin() {
     const selectedFile = e.target.files[0];
     if (!selectedFile) return;
 
-    if (!selectedFile.name.toLowerCase().endsWith(".webp")) {
-      alert("Only .webp files are allowed");
+    if (!selectedFile.name.toLowerCase().endsWith(".pdf")) {
+      alert("Only .pdf files are allowed");
       return;
     }
 
@@ -47,16 +79,13 @@ export default function DisclosuresAdmin() {
     setMessage("");
     setUploading(true);
 
-    if (!name || !date || !file) {
-      setMessage("All fields including file are required.");
-      setUploading(false);
-      return;
-    }
 
     const formData = new FormData();
     formData.append("name", name);
     formData.append("date", date);
-    formData.append("file", file);
+    formData.append("mainTitle", mainTitle);
+    formData.append("extraLink", extraLink);
+    if (file) formData.append("file", file);
 
     try {
       const res = await fetch(`${API_BASE}/create_disclosure`, { method: "POST", body: formData });
@@ -64,7 +93,7 @@ export default function DisclosuresAdmin() {
       if (!res.ok) setMessage(result.message || "Error creating disclosure");
       else {
         setMessage("Disclosure created successfully!");
-        setName(""); setDate(""); setFile(null);
+        setName(""); setDate(""); setMainTitle(""); setExtraLink(""); setFile(null);
         fetchDisclosures();
       }
     } catch (err) {
@@ -96,6 +125,8 @@ export default function DisclosuresAdmin() {
     setEditFields({
       name: disclosure.name,
       date: disclosure.date?.substring(0, 10) || "",
+      mainTitle: disclosure.mainTitle || "",
+      extraLink: disclosure.extraLink || "",
       fileObj: null,
     });
   };
@@ -107,6 +138,8 @@ export default function DisclosuresAdmin() {
     const formData = new FormData();
     formData.append("name", editFields.name);
     formData.append("date", editFields.date);
+    formData.append("mainTitle", editFields.mainTitle);
+    formData.append("extraLink", editFields.extraLink);
     if (editFields.fileObj) formData.append("file", editFields.fileObj);
 
     try {
@@ -136,11 +169,10 @@ export default function DisclosuresAdmin() {
             <label className="flex flex-col">
               Name
               <input
-                className="border border-gray-300 rounded p-2 mt-1"
-                value={editFields.name}
-                onChange={(e) => setEditFields({ ...editFields, name: e.target.value })}
-                required
-              />
+                  className="border border-gray-300 rounded p-2 mt-1"
+                  value={editFields.name}
+                  onChange={(e) => setEditFields({ ...editFields, name: e.target.value })}
+                />
             </label>
 
             <label className="flex flex-col">
@@ -150,7 +182,33 @@ export default function DisclosuresAdmin() {
                 className="border border-gray-300 rounded p-2 mt-1"
                 value={editFields.date}
                 onChange={(e) => setEditFields({ ...editFields, date: e.target.value })}
-                required
+              />
+            </label>
+
+            <label className="flex flex-col">
+              Main Title
+              <select
+                className="border border-gray-300 rounded p-2 mt-1"
+                value={editFields.mainTitle || ""}
+                onChange={(e) => setEditFields({ ...editFields, mainTitle: e.target.value })}
+              >
+                <option value="">-- Select Main Title (optional) --</option>
+                {mainTitleOptions.map((opt) => (
+                  <option key={opt} value={opt}>
+                    {opt}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="flex flex-col">
+              Extra Link (optional)
+              <input
+                type="text"
+                className="border border-gray-300 rounded p-2 mt-1"
+                placeholder="e.g., https://..."
+                value={editFields.extraLink || ""}
+                onChange={(e) => setEditFields({ ...editFields, extraLink: e.target.value })}
               />
             </label>
 
@@ -194,7 +252,6 @@ export default function DisclosuresAdmin() {
               className="border border-gray-300 rounded p-2 mt-1"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              required
             />
           </label>
 
@@ -205,18 +262,43 @@ export default function DisclosuresAdmin() {
               className="border border-gray-300 rounded p-2 mt-1"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              required
             />
           </label>
 
           <label className="flex flex-col">
-            File (.webp only)
+            Main Title
+            <select
+              className="border border-gray-300 rounded p-2 mt-1"
+              value={mainTitle}
+              onChange={(e) => setMainTitle(e.target.value)}
+            >
+              <option value="">-- Select Main Title (optional) --</option>
+              {mainTitleOptions.map((opt) => (
+                <option key={opt} value={opt}>
+                  {opt}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <label className="flex flex-col">
+            Extra Link (optional)
+            <input
+              type="text"
+              className="border border-gray-300 rounded p-2 mt-1"
+              placeholder="e.g., https://..."
+              value={extraLink}
+              onChange={(e) => setExtraLink(e.target.value)}
+            />
+          </label>
+
+          <label className="flex flex-col">
+            File (.pdf only)
             <input
               type="file"
-              accept=".webp"
+              accept=".pdf"
               onChange={handleFileSelect}
               className="mt-1"
-              required
             />
           </label>
 
@@ -238,7 +320,9 @@ export default function DisclosuresAdmin() {
         columns={[
           { key: "name", label: "Name" },
           { key: "date", label: "Date" },
+          { key: "mainTitle", label: "Main Title" },
           { key: "file", label: "File", render: (r) => r.file ? <a href={r.file} target="_blank" className="text-blue-600 underline">View</a> : "-" },
+          { key: "extraLink", label: "Extra Link", render: (r) => r.extraLink ? <a href={r.extraLink} target="_blank" className="text-blue-600 underline">View</a> : "-" },
         ]}
         data={disclosures}
         actions={(row) => (

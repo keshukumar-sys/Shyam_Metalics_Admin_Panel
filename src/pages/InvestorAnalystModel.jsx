@@ -151,10 +151,10 @@ export default function InvestorAnalystModel() {
           className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
         >
           <option value="Investors/Analyst Meet">Investors/Analyst Meet</option>
-          <option value="Investor Presentation">Investor Presentation</option>
-          <option value="Transcript">Transcript</option>
-          <option value="Investor Call Intimation">Investor Call Intimation</option>
-          <option value="Investor Call Recording">Investor Call Recording</option>
+            <option value="Investor Presentation">Investor Presentation</option>
+            <option value="Transcript">Transcript</option>
+            <option value="Investor Call Intimation">Investor Call Intimation</option>
+            <option value="Investor Call Recording">Investor Call Recording</option>
         </select>
       </div>
 

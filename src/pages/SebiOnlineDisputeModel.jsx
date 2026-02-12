@@ -7,6 +7,7 @@ export default function SebiOnlineDisputeModel() {
   const [sebiName, setSebiName] = useState("");
   const [sebiDate, setSebiDate] = useState("");
   const [file, setFile] = useState(null);
+  const [extraLink, setExtraLink] = useState("");
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [list, setList] = useState([]);
@@ -14,6 +15,7 @@ export default function SebiOnlineDisputeModel() {
   const [editName, setEditName] = useState("");
   const [editDate, setEditDate] = useState("");
   const [editFile, setEditFile] = useState(null);
+  const [editExtraLink, setEditExtraLink] = useState("");
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/sebi`;
 
@@ -38,8 +40,13 @@ export default function SebiOnlineDisputeModel() {
     setMessage("");
     setUploading(true);
 
-    if (!sebiName || !sebiDate || !file) {
-      setMessage("Please provide name, date and a file.");
+    if (!sebiName) {
+      setMessage("Please provide name.");
+      return;
+    }
+
+    if (!file && !extraLink) {
+      setMessage("Please provide either a file or an extra link.");
       return;
     }
 
@@ -47,8 +54,8 @@ export default function SebiOnlineDisputeModel() {
       const formData = new FormData();
       formData.append("sebi_name", sebiName);
       formData.append("sebi_date", sebiDate);
-      // send file under both keys to match common multer setups
-      formData.append("file", file);
+      if (file) formData.append("file", file);
+      if (extraLink) formData.append("extra_link", extraLink);
   
 
       const res = await fetch(`${API_BASE}/add_sebi`, {
@@ -66,6 +73,7 @@ export default function SebiOnlineDisputeModel() {
       setSebiName("");
       setSebiDate("");
       setFile(null);
+      setExtraLink("");
       fetchList();
     } catch (err) {
       console.error(err);
@@ -94,12 +102,13 @@ export default function SebiOnlineDisputeModel() {
     setEditId(row._id);
     setEditName(row.sebi_name);
     setEditDate(row.sebi_date);
+    setEditExtraLink(row.extra_link || "");
   };
 
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
-    if (!editName || !editDate) {
-      alert("Please fill all fields");
+    if (!editName) {
+      alert("Please fill name field");
       return;
     }
     setUploading(true);
@@ -108,6 +117,7 @@ export default function SebiOnlineDisputeModel() {
       formData.append("sebi_name", editName);
       formData.append("sebi_date", editDate);
       if (editFile) formData.append("file", editFile);
+      if (editExtraLink) formData.append("extra_link", editExtraLink);
 
       const headers = {};
       const token = localStorage.getItem("shyam_token");
@@ -118,11 +128,14 @@ export default function SebiOnlineDisputeModel() {
       const res = await fetch(`${API_BASE}/update_sebi/${editId}`, {
         method: "PUT",
         headers: headers,
+
         body: formData,
       });
       const json = await res.json();
+      console.log("Update response:", json);
       if (!res.ok) return alert(json.message || "Update failed");
       setEditId(null);
+      setEditFile(null);
       fetchList();
     } catch (e) {
       console.error(e);
@@ -143,13 +156,18 @@ export default function SebiOnlineDisputeModel() {
         </label>
 
         <label>
-          Date
+          Date (optional)
           <input type="date" value={sebiDate} onChange={(e) => setSebiDate(e.target.value)} />
         </label>
 
         <label>
-          File
-          <input type="file" onChange={(e) => setFile(e.target.files && e.target.files[0])} />
+          File (optional)
+          <input type="file" accept=".pdf" onChange={(e) => setFile(e.target.files && e.target.files[0])} />
+        </label>
+
+        <label>
+          Extra Link (optional)
+          <input type="text" placeholder="e.g., https://..." value={extraLink} onChange={(e) => setExtraLink(e.target.value)} />
         </label>
 
         <button type="submit" disabled={uploading}>{uploading ? "Uploading..." : "Add SEBI entry"}</button>
@@ -162,7 +180,8 @@ export default function SebiOnlineDisputeModel() {
           columns={[
             { key: "sebi_name", label: "Name" },
             { key: "sebi_date", label: "Date" },
-            { key: "sebi_file", label: "File", render: (r) => (r.sebi_file ? <a href={r.sebi_file} target="_blank" rel="noreferrer">View</a> : "-") }
+            { key: "sebi_file", label: "File", render: (r) => (r.sebi_file ? <a href={r.sebi_file} target="_blank" rel="noreferrer">View</a> : "-") },
+            { key: "extra_link", label: "Extra Link", render: (r) => (r.extra_link ? <a href={r.extra_link} target="_blank" rel="noreferrer">View</a> : "-") }
           ]}
           data={list}
           actions={(row) => (
@@ -183,12 +202,16 @@ export default function SebiOnlineDisputeModel() {
               <input value={editName} onChange={(e) => setEditName(e.target.value)} />
             </label>
             <label>
-              Date
+              Date (optional)
               <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
             </label>
             <label>
               File (optional)
-              <input type="file" onChange={(e) => setEditFile(e.target.files && e.target.files[0])} />
+              <input type="file" accept=".pdf" onChange={(e) => setEditFile(e.target.files && e.target.files[0])} />
+            </label>
+            <label>
+              Extra Link (optional)
+              <input type="text" placeholder="e.g., https://..." value={editExtraLink} onChange={(e) => setEditExtraLink(e.target.value)} />
             </label>
             <div style={{ display: "flex", gap: 8 }}>
               <button type="submit">Update</button>
