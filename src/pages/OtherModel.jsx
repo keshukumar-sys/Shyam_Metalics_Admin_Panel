@@ -144,7 +144,7 @@ export default function OtherModel() {
       fetchList();
 
     } catch (e) {
-      console.error(e); 
+      console.error(e);
       alert("Network error: " + e.message);
     } finally {
       setUploading(false);
@@ -158,17 +158,63 @@ export default function OtherModel() {
     setMessage("");
     setUploading(true);
 
-    if (!option || !details.name || !details.date || !file) {
-      setMessage("Please provide option, name, date and a file.");
+    if (!option) {
+      setMessage("Please select an option.");
+      setUploading(false);
       return;
     }
 
     try {
       const formData = new FormData();
       formData.append("option", option);
-      formData.append("name", details.name);
-      formData.append("date", details.date);
-      formData.append("file", file);
+
+      // ===================== OTHER COMPLIANCES =====================
+      if (option === "Other Compliances") {
+        if (!details.name || !details.date || !file) {
+          setMessage("Please provide name, date and file.");
+          setUploading(false);
+          return;
+        }
+
+        formData.append(
+          "details",
+          JSON.stringify({
+            name: details.name,
+            date: details.date,
+          })
+        );
+
+        formData.append("file", file);
+      }
+
+      // ===================== CONTACT DETAILS =====================
+      else if (
+        option === "KMP Contact Details" ||
+        option === "Investor Relations Contact"
+      ) {
+        if (!details.contactInfo) {
+          setMessage("Please provide contact information.");
+          setUploading(false);
+          return;
+        }
+
+        // Backend expects ARRAY
+        formData.append(
+          "details",
+          JSON.stringify([
+            {
+              contactInfo: details.contactInfo,
+            },
+          ])
+        );
+      }
+
+      // ===================== INVALID OPTION =====================
+      else {
+        setMessage("Invalid option selected.");
+        setUploading(false);
+        return;
+      }
 
       const res = await fetch(`${API_BASE}/add_other`, {
         method: "POST",
@@ -176,14 +222,23 @@ export default function OtherModel() {
       });
 
       const result = await res.json();
+
       if (!res.ok) {
         setMessage(result.message || "Upload failed");
         return;
       }
 
-      setMessage(result.message || "Entry added");
-      setDetails({ name: "", date: "" });
+      setMessage(result.message || "Entry added successfully");
+
+      // Reset fields
+      setDetails({
+        name: "",
+        date: "",
+        contactInfo: "",
+      });
+
       setFile(null);
+
       fetchList();
     } catch (err) {
       console.error(err);
@@ -192,6 +247,7 @@ export default function OtherModel() {
       setUploading(false);
     }
   };
+
 
   // ------------------ SUBMIT FOR CONTACT DETAILS ------------------
   const handleContactSubmit = async (e) => {
