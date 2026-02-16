@@ -118,7 +118,7 @@ export default function CorporateModel() {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const res = await fetch(`${API_BASE}/update/${editId}`, {
+      const res = await fetch(`${API_BASE}/update_ca/${editId}`, {
         method: "PUT",
         headers: headers,
         body: formData,

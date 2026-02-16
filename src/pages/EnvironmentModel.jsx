@@ -113,7 +113,7 @@ export default function EnvironmentModel() {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const res = await fetch(`${API_BASE}/update/${editId}`, {
+      const res = await fetch(`${API_BASE}/update_environment/${editId}`, {
         method: "PUT",
         headers: headers,
         body: formData,

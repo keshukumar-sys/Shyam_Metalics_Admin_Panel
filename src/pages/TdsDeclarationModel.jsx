@@ -14,7 +14,7 @@ export default function TdsDeclarationModel() {
   const [editName, setEditName] = useState("");
   const [editDate, setEditDate] = useState("");
   const [editFile, setEditFile] = useState(null);
-
+  const [uplaoding, setUploading] = useState(false);
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/tds`; 
 
   useEffect(() => {

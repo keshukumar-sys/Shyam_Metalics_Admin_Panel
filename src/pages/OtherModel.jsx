@@ -29,20 +29,45 @@ export default function OtherModel() {
     email: "",
   });
 
-  const API_BASE = `${
-    import.meta.env.VITE_API_BASE || "http://localhost:3002"
-  }/other`;
+  const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"
+    }/other`;
 
   useEffect(() => {
     if (option) fetchList();
   }, [option]);
 
+  // const fetchList = async () => {
+  //   try {
+  //     const res = await fetch(`${API_BASE}/get_other/?${option}`);
+  //     if (!res.ok) throw new Error("Failed to fetch");
+  //     const json = await res.json();
+  //     setList(json.data || []);
+  //   } catch (err) {
+  //     console.error(err);
+  //     setList([]);
+  //   }
+  // };
   const fetchList = async () => {
     try {
-      const res = await fetch(`${API_BASE}/get_other/${option}`);
+      const res = await fetch(`${API_BASE}/get_other/?${option}`);
       if (!res.ok) throw new Error("Failed to fetch");
+
       const json = await res.json();
-      setList(json.data || []);
+
+      // 🔥 Flatten details array properly
+      const formattedData = (json.data || []).flatMap((item) =>
+        (item.details || []).map((detail) => ({
+          _id: detail._id?.$oid || detail._id,
+          name: detail.name,
+          date: detail.date?.$date
+            ? new Date(detail.date.$date).toISOString().split("T")[0]
+            : "",
+          file: detail.file,
+          parentId: item._id?.$oid || item._id,
+        }))
+      );
+
+      setList(formattedData);
     } catch (err) {
       console.error(err);
       setList([]);
@@ -72,39 +97,60 @@ export default function OtherModel() {
 
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
-    if (!editName || !editDate) {
+
+    if (!editName) {
       alert("Please fill all fields");
       return;
     }
+
     setUploading(true);
+
     try {
       const formData = new FormData();
-      formData.append("name", editName);
-      formData.append("date", editDate);
-      if (editFile) formData.append("file", editFile);
 
-      const headers = {};
-      const token = localStorage.getItem("shyam_token");
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
+      // 🔥 REQUIRED
+      formData.append("option", option);
+
+      // 🔥 Send details as JSON string
+      const detailsPayload = {
+        name: editName,
+        date: editDate,
+      };
+
+      formData.append("details", JSON.stringify(detailsPayload));
+
+      if (editFile) {
+        formData.append("file", editFile);
       }
+
+      const token = localStorage.getItem("shyam_token");
 
       const res = await fetch(`${API_BASE}/update_other/${editId}`, {
         method: "PUT",
-        headers: headers,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
         body: formData,
       });
+
       const json = await res.json();
-      if (!res.ok) return alert(json.message || "Update failed");
+
+      if (!res.ok) {
+        alert(json.message || "Update failed");
+        return;
+      }
+
       setEditId(null);
       fetchList();
+
     } catch (e) {
-      console.error(e);
+      console.error(e); 
       alert("Network error: " + e.message);
     } finally {
       setUploading(false);
     }
   };
+
 
   // ------------------ SUBMIT FOR OTHER COMPLIANCES ------------------
   const handleOtherComplianceSubmit = async (e) => {
@@ -245,117 +291,117 @@ export default function OtherModel() {
       {/* ========================= FORM 2: CONTACT DETAILS ========================= */}
       {(option === "KMP Contact Details" ||
         option === "Investor Relations Contact") && (
-        <form onSubmit={handleContactSubmit} style={{ display: "grid", gap: 8, maxWidth: 640 }}>
-          <h3>Contact Information</h3>
+          <form onSubmit={handleContactSubmit} style={{ display: "grid", gap: 8, maxWidth: 640 }}>
+            <h3>Contact Information</h3>
 
-          <label>
-            Title Name (Required)
-            <input
-              type="text"
-              placeholder="Enter Title Name"
-              value={details.name}
-              onChange={(e) => setDetails({ ...details, name: e.target.value })}
-            />
-          </label>
+            <label>
+              Title Name (Required)
+              <input
+                type="text"
+                placeholder="Enter Title Name"
+                value={details.name}
+                onChange={(e) => setDetails({ ...details, name: e.target.value })}
+              />
+            </label>
 
-          <label>
-            Date
-            <input
-              type="date"
-              value={details.date}
-              onChange={(e) => setDetails({ ...details, date: e.target.value })}
-            />
-          </label>
+            <label>
+              Date
+              <input
+                type="date"
+                value={details.date}
+                onChange={(e) => setDetails({ ...details, date: e.target.value })}
+              />
+            </label>
 
-          <hr />
+            <hr />
 
-          <label>
-            Contact Name
-            <input
-              type="text"
-              placeholder="Contact Name"
-              value={contactInfo.name}
-              onChange={(e) =>
-                setContactInfo({ ...contactInfo, name: e.target.value })
-              }
-            />
-          </label>
+            <label>
+              Contact Name
+              <input
+                type="text"
+                placeholder="Contact Name"
+                value={contactInfo.name}
+                onChange={(e) =>
+                  setContactInfo({ ...contactInfo, name: e.target.value })
+                }
+              />
+            </label>
 
-          <label>
-            Designation
-            <input
-              type="text"
-              placeholder="Designation"
-              value={contactInfo.designation}
-              onChange={(e) =>
-                setContactInfo({ ...contactInfo, designation: e.target.value })
-              }
-            />
-          </label>
+            <label>
+              Designation
+              <input
+                type="text"
+                placeholder="Designation"
+                value={contactInfo.designation}
+                onChange={(e) =>
+                  setContactInfo({ ...contactInfo, designation: e.target.value })
+                }
+              />
+            </label>
 
-          <label>
-            Office
-            <input
-              type="text"
-              placeholder="Office"
-              value={contactInfo.office}
-              onChange={(e) =>
-                setContactInfo({ ...contactInfo, office: e.target.value })
-              }
-            />
-          </label>
+            <label>
+              Office
+              <input
+                type="text"
+                placeholder="Office"
+                value={contactInfo.office}
+                onChange={(e) =>
+                  setContactInfo({ ...contactInfo, office: e.target.value })
+                }
+              />
+            </label>
 
-          <label>
-            Company
-            <input
-              type="text"
-              placeholder="Company"
-              value={contactInfo.company}
-              onChange={(e) =>
-                setContactInfo({ ...contactInfo, company: e.target.value })
-              }
-            />
-          </label>
+            <label>
+              Company
+              <input
+                type="text"
+                placeholder="Company"
+                value={contactInfo.company}
+                onChange={(e) =>
+                  setContactInfo({ ...contactInfo, company: e.target.value })
+                }
+              />
+            </label>
 
-          <label>
-            Address
-            <textarea
-              placeholder="Address"
-              value={contactInfo.address}
-              onChange={(e) =>
-                setContactInfo({ ...contactInfo, address: e.target.value })
-              }
-            />
-          </label>
+            <label>
+              Address
+              <textarea
+                placeholder="Address"
+                value={contactInfo.address}
+                onChange={(e) =>
+                  setContactInfo({ ...contactInfo, address: e.target.value })
+                }
+              />
+            </label>
 
-          <label>
-            Phone
-            <input
-              type="text"
-              placeholder="Phone"
-              value={contactInfo.phone}
-              onChange={(e) =>
-                setContactInfo({ ...contactInfo, phone: e.target.value })
-              }
-            />
-          </label>
+            <label>
+              Phone
+              <input
+                type="text"
+                placeholder="Phone"
+                value={contactInfo.phone}
+                onChange={(e) =>
+                  setContactInfo({ ...contactInfo, phone: e.target.value })
+                }
+              />
+            </label>
 
-          <label>
-            Email
-            <input
-              type="email"
-              placeholder="Email"
-              value={contactInfo.email}
-              onChange={(e) =>
-                setContactInfo({ ...contactInfo, email: e.target.value })
-              }
-            />
-          </label>
+            <label>
+              Email
+              <input
+                type="email"
+                placeholder="Email"
+                value={contactInfo.email}
+                onChange={(e) =>
+                  setContactInfo({ ...contactInfo, email: e.target.value })
+                }
+              />
+            </label>
 
-          <button type="submit" disabled={uploading}>{uploading ? "Submitting..." : "Submit Contact Details"}</button>
-          {message && <div>{message}</div>}
-        </form>
-      )}
+            <button type="submit" disabled={uploading}>{uploading ? "Submitting..." : "Submit Contact Details"}</button>
+            {message && <div>{message}</div>}
+          </form>
+        )}
 
       {option && list.length > 0 && (
         <section style={{ marginTop: 24 }}>
@@ -368,7 +414,7 @@ export default function OtherModel() {
             data={list}
             actions={(row) => (
               <>
-                <button className="btn-sm" style={{marginRight: 8}} onClick={() => handleEdit(row)}>Edit</button>
+                <button className="btn-sm" style={{ marginRight: 8 }} onClick={() => handleEdit(row)}>Edit</button>
                 <button className="btn-sm" onClick={() => handleDelete(row._id)}>Delete</button>
               </>
             )}

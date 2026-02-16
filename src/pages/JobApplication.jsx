@@ -9,6 +9,7 @@ export default function AdminApplications() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedApp, setSelectedApp] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
     fetchApplications();
@@ -20,7 +21,7 @@ export default function AdminApplications() {
       const res = await axios.get(
         `${API_BASE}/jobs/applications/all`
       );
-      setApplications(res.data);
+      setApplications(res.data || []);
     } catch (err) {
       console.error("Fetch applications error:", err);
     }
@@ -63,9 +64,24 @@ export default function AdminApplications() {
     }
   };
 
+  // ================= FILTER =================
+  const filteredApplications = applications.filter((app) => {
+    const term = searchTerm.toLowerCase();
+
+    return (
+      app.fullName?.toLowerCase().includes(term) ||
+      app.email?.toLowerCase().includes(term) ||
+      app.status?.toLowerCase().includes(term) ||
+      app.jobId?.title?.toLowerCase().includes(term)
+    );
+  });
+
   // ================= PAGINATION =================
-  const totalPages = Math.ceil(applications.length / ITEMS_PER_PAGE);
-  const paginatedData = applications.slice(
+  const totalPages = Math.ceil(
+    filteredApplications.length / ITEMS_PER_PAGE
+  );
+
+  const paginatedData = filteredApplications.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -73,8 +89,22 @@ export default function AdminApplications() {
   return (
     <div className="p-8">
       <h1 className="text-2xl font-bold mb-6">
-        Job Applications ({applications.length})
+        Job Applications ({filteredApplications.length})
       </h1>
+
+      {/* ================= SEARCH ================= */}
+      <div className="mb-4">
+        <input
+          type="text"
+          placeholder="Search by name, email, job title or status..."
+          value={searchTerm}
+          onChange={(e) => {
+            setSearchTerm(e.target.value);
+            setCurrentPage(1);
+          }}
+          className="w-full md:w-96 border p-2 rounded"
+        />
+      </div>
 
       {/* ================= TABLE ================= */}
       <div className="overflow-x-auto">
@@ -89,69 +119,79 @@ export default function AdminApplications() {
           </thead>
 
           <tbody>
-            {paginatedData.map((app) => (
-              <tr key={app._id} className="text-center">
-                <td className="border p-2">{app.fullName}</td>
-                <td className="border p-2">
-                  {app.jobId?.title || "Deleted Job"}
-                </td>
-                <td className="border p-2">
-                  <span className="px-2 py-1 rounded bg-gray-200">
-                    {app.status || "Pending"}
-                  </span>
-                </td>
-                <td className="border p-2 space-x-2">
-                  <button
-                    onClick={() => setSelectedApp(app)}
-                    className="px-3 py-1 bg-blue-600 text-white rounded"
-                  >
-                    View
-                  </button>
-                  <button
-                    onClick={() => deleteApplication(app._id)}
-                    className="px-3 py-1 bg-red-600 text-white rounded"
-                  >
-                    Delete
-                  </button>
+            {paginatedData.length > 0 ? (
+              paginatedData.map((app) => (
+                <tr key={app._id} className="text-center">
+                  <td className="border p-2">{app.fullName}</td>
+                  <td className="border p-2">
+                    {app.jobId?.title || "Deleted Job"}
+                  </td>
+                  <td className="border p-2">
+                    <span className="px-2 py-1 rounded bg-gray-200">
+                      {app.status || "Pending"}
+                    </span>
+                  </td>
+                  <td className="border p-2 space-x-2">
+                    <button
+                      onClick={() => setSelectedApp(app)}
+                      className="px-3 py-1 bg-blue-600 text-white rounded"
+                    >
+                      View
+                    </button>
+                    <button
+                      onClick={() => deleteApplication(app._id)}
+                      className="px-3 py-1 bg-red-600 text-white rounded"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))
+            ) : (
+              <tr>
+                <td colSpan="4" className="p-4 text-center">
+                  No applications found
                 </td>
               </tr>
-            ))}
+            )}
           </tbody>
         </table>
       </div>
 
       {/* ================= PAGINATION ================= */}
-      <div className="flex justify-center mt-6 gap-2">
-        <button
-          disabled={currentPage === 1}
-          onClick={() => setCurrentPage((p) => p - 1)}
-          className="px-3 py-1 border rounded disabled:opacity-50"
-        >
-          Prev
-        </button>
-
-        {[...Array(totalPages)].map((_, i) => (
+      {totalPages > 1 && (
+        <div className="flex justify-center mt-6 gap-2">
           <button
-            key={i}
-            onClick={() => setCurrentPage(i + 1)}
-            className={`px-3 py-1 border rounded ${
-              currentPage === i + 1
-                ? "bg-black text-white"
-                : ""
-            }`}
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage((p) => p - 1)}
+            className="px-3 py-1 border rounded disabled:opacity-50"
           >
-            {i + 1}
+            Prev
           </button>
-        ))}
 
-        <button
-          disabled={currentPage === totalPages}
-          onClick={() => setCurrentPage((p) => p + 1)}
-          className="px-3 py-1 border rounded disabled:opacity-50"
-        >
-          Next
-        </button>
-      </div>
+          {[...Array(totalPages)].map((_, i) => (
+            <button
+              key={i}
+              onClick={() => setCurrentPage(i + 1)}
+              className={`px-3 py-1 border rounded ${
+                currentPage === i + 1
+                  ? "bg-black text-white"
+                  : ""
+              }`}
+            >
+              {i + 1}
+            </button>
+          ))}
+
+          <button
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage((p) => p + 1)}
+            className="px-3 py-1 border rounded disabled:opacity-50"
+          >
+            Next
+          </button>
+        </div>
+      )}
 
       {/* ================= POPUP ================= */}
       {selectedApp && (
@@ -164,36 +204,23 @@ export default function AdminApplications() {
               Application Details
             </h2>
 
-            {/* Candidate Info */}
             <div className="mb-4">
-              <h3 className="font-semibold mb-2">Candidate</h3>
               <p><b>Name:</b> {selectedApp.fullName}</p>
               <p><b>Email:</b> {selectedApp.email}</p>
               <p><b>Mobile:</b> {selectedApp.mobile}</p>
               <p><b>Experience:</b> {selectedApp.totalExperience}</p>
+              <p><b>Job:</b> {selectedApp.jobId?.title}</p>
             </div>
 
-            {/* Job Info */}
-            <div className="mb-4">
-              <h3 className="font-semibold mb-2">Job</h3>
-              <p><b>Title:</b> {selectedApp.jobId?.title}</p>
-              <p><b>Location:</b> {selectedApp.jobId?.location}</p>
-              <p><b>CTC:</b> {selectedApp.jobId?.ctc}</p>
-            </div>
+            <a
+              href={selectedApp.resume}
+              target="_blank"
+              rel="noreferrer"
+              className="text-blue-600 underline block mb-4"
+            >
+              View Resume
+            </a>
 
-            {/* Resume */}
-            <div className="mb-4">
-              <a
-                href={selectedApp.resume}
-                target="_blank"
-                rel="noreferrer"
-                className="text-blue-600 underline"
-              >
-                View Resume
-              </a>
-            </div>
-
-            {/* Status Update */}
             <select
               className="border p-2 w-full mb-3"
               value={selectedApp.status || "Pending"}

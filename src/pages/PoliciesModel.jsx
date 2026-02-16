@@ -114,7 +114,7 @@ export default function PoliciesModel() {
         headers.Authorization = `Bearer ${token}`;
       }
 
-      const res = await fetch(`${API_BASE}/update/${editId}`, {
+      const res = await fetch(`${API_BASE}/update_policy/${editId}`, {
         method: "PUT",
         headers: headers,
         body: formData,
