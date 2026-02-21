@@ -7,6 +7,8 @@ export default function DisclosuresAdmin() {
   const [mainTitle, setMainTitle] = useState("");
   const [file, setFile] = useState(null);
   const [extraLink, setExtraLink] = useState("");
+  const [sequenceNumber, setSequenceNumber] = useState("");
+  const [manualTitle, setManualTitle] = useState("");
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [disclosures, setDisclosures] = useState([]);
@@ -16,33 +18,36 @@ export default function DisclosuresAdmin() {
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/disclosure`;
 
   const mainTitleOptions = [
-    "Composition of Committees",
-    "Contact Information of Designated Officials – Investor Grievances",
-    "Newspaper Publications",
-    "Criteria of making payments to NEDs",
-    "Statements Dividend Distribution Policy",
-    "Contact Details of KMPs determining Materiality of Events",
-    "Secretarial Compliance Report",
-    "Credit Ratings",
-    "Investor Grievance Redressal",
-    "Familiarization Programme for Independent Directors",
-    "Policy on Related Party Transactions",
-    "Financial Information",
-    "Composition of BOD & Committees",
-    "Terms of Appointment of Independent Directors",
-    "Memorandum of Association and Articles of Association",
-    "Statement of deviation or variation under Reg 32 of SEBI LODR",
-    "Disclosure under Reg 30(8) of SEBI LODR",
-    "Annual Return",
-    "Subsidiaries – Financial Statements",
-    "Stock Exchange Intimations",
-    "Policy for determination of Materiality of Events",
-    "Schedule of Analysts/Investors Meet & Presentations",
-    "Shareholding Pattern",
-    "Policy for determination of Material Subsidiary",
-    "Whistle Blower Policy",
-    "Code of Conduct for BOD & SMP",
     "Details of Business",
+    "Memorandum of Association and Articles of Association",
+    "Brief Profile of Board of Directors including Directorship and Full-time Positions in Body Corporates",
+    "Terms and conditions of appointment of independent directors",
+    "Composition of various committees of board of directors",
+    "Code of conduct of board of directors and senior management personnel",
+    "Details of establishment of vigil mechanism/Whistle Blower policy",
+    "Policy on dealing with related party transactions",
+    "Policy for determining ‘material’ subsidiaries",
+    "Details of familiarization programmes imparted to directors",
+    "Email address for grievance redressal and other relevant details",
+    "Contact information of the designated officials responsible for assisting and handling investor grievances",
+    "Notice of meeting of the Board of Directors where financial results shall be discussed",
+    "Financial results approved at the Board Meeting",
+    "Complete copy of the Annual Report including Balance Sheet, Profit and Loss Account, Directors’ Report, Corporate Governance Report, etc.",
+    "Shareholding pattern",
+    "Schedule of analyst or institutional investor meet",
+    "Presentations made to analysts or institutional investors",
+    "Audio or video recordings of post-earnings/quarterly calls",
+    "Transcripts of post-earnings/quarterly calls",
+    "Items under sub-regulation (1) of Regulation 47",
+    "All credit ratings obtained for outstanding instruments",
+    "Separate audited financial statements of each subsidiary of the listed entity in respect of a relevant financial year",
+    "Secretarial Compliance Report",
+    "Policy for determination of materiality of events/information",
+    "Contact details of Key Managerial Personnel authorized for determining materiality of events/information",
+    "Dividend Distribution Policy",
+    "Annual Return",
+    "Disclosure required under Regulation 30(8)",
+    "Other"
   ];
 
   useEffect(() => {
@@ -85,6 +90,8 @@ export default function DisclosuresAdmin() {
     formData.append("date", date);
     formData.append("mainTitle", mainTitle);
     formData.append("extraLink", extraLink);
+    formData.append("sequenceNumber", sequenceNumber);
+    formData.append("manualTitle", manualTitle);
     if (file) formData.append("file", file);
 
     try {
@@ -94,6 +101,7 @@ export default function DisclosuresAdmin() {
       else {
         setMessage("Disclosure created successfully!");
         setName(""); setDate(""); setMainTitle(""); setExtraLink(""); setFile(null);
+        setSequenceNumber(""); setManualTitle("");
         fetchDisclosures();
       }
     } catch (err) {
@@ -127,6 +135,8 @@ export default function DisclosuresAdmin() {
       date: disclosure.date?.substring(0, 10) || "",
       mainTitle: disclosure.mainTitle || "",
       extraLink: disclosure.extraLink || "",
+      sequenceNumber: disclosure.sequenceNumber || "",
+      manualTitle: disclosure.manualTitle || "",
       fileObj: null,
     });
   };
@@ -140,6 +150,8 @@ export default function DisclosuresAdmin() {
     formData.append("date", editFields.date);
     formData.append("mainTitle", editFields.mainTitle);
     formData.append("extraLink", editFields.extraLink);
+    formData.append("sequenceNumber", editFields.sequenceNumber);
+    formData.append("manualTitle", editFields.manualTitle);
     if (editFields.fileObj) formData.append("file", editFields.fileObj);
 
     try {
@@ -169,10 +181,10 @@ export default function DisclosuresAdmin() {
             <label className="flex flex-col">
               Name
               <input
-                  className="border border-gray-300 rounded p-2 mt-1"
-                  value={editFields.name}
-                  onChange={(e) => setEditFields({ ...editFields, name: e.target.value })}
-                />
+                className="border border-gray-300 rounded p-2 mt-1"
+                value={editFields.name}
+                onChange={(e) => setEditFields({ ...editFields, name: e.target.value })}
+              />
             </label>
 
             <label className="flex flex-col">
@@ -199,6 +211,29 @@ export default function DisclosuresAdmin() {
                   </option>
                 ))}
               </select>
+            </label>
+
+            {editFields.mainTitle === "Other" && (
+              <label className="flex flex-col">
+                Manual Title
+                <input
+                  className="border border-gray-300 rounded p-2 mt-1"
+                  value={editFields.manualTitle}
+                  onChange={(e) => setEditFields({ ...editFields, manualTitle: e.target.value })}
+                  placeholder="Enter manual title"
+                />
+              </label>
+            )}
+
+            <label className="flex flex-col">
+              Sequence Number (optional)
+              <input
+                type="number"
+                className="border border-gray-300 rounded p-2 mt-1"
+                placeholder="e.g., 1, 2, 3..."
+                value={editFields.sequenceNumber}
+                onChange={(e) => setEditFields({ ...editFields, sequenceNumber: e.target.value })}
+              />
             </label>
 
             <label className="flex flex-col">
@@ -281,6 +316,29 @@ export default function DisclosuresAdmin() {
             </select>
           </label>
 
+          {mainTitle === "Other" && (
+            <label className="flex flex-col">
+              Manual Title
+              <input
+                className="border border-gray-300 rounded p-2 mt-1"
+                value={manualTitle}
+                onChange={(e) => setManualTitle(e.target.value)}
+                placeholder="Enter manual title"
+              />
+            </label>
+          )}
+
+          <label className="flex flex-col">
+            Sequence Number (optional)
+            <input
+              type="number"
+              className="border border-gray-300 rounded p-2 mt-1"
+              placeholder="e.g., 1, 2, 3..."
+              value={sequenceNumber}
+              onChange={(e) => setSequenceNumber(e.target.value)}
+            />
+          </label>
+
           <label className="flex flex-col">
             Extra Link (optional)
             <input
@@ -319,8 +377,13 @@ export default function DisclosuresAdmin() {
       <DataTable
         columns={[
           { key: "name", label: "Name" },
+          { key: "sequenceNumber", label: "Seq" },
           { key: "date", label: "Date" },
-          { key: "mainTitle", label: "Main Title" },
+          {
+            key: "mainTitle",
+            label: "Main Title",
+            render: (r) => r.mainTitle === "Other" ? `Other: ${r.manualTitle}` : r.mainTitle
+          },
           { key: "file", label: "File", render: (r) => r.file ? <a href={r.file} target="_blank" className="text-blue-600 underline">View</a> : "-" },
           { key: "extraLink", label: "Extra Link", render: (r) => r.extraLink ? <a href={r.extraLink} target="_blank" className="text-blue-600 underline">View</a> : "-" },
         ]}
