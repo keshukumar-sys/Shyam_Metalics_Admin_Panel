@@ -5,15 +5,16 @@ export default function DisclosuresAdmin() {
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
   const [mainTitle, setMainTitle] = useState("");
+  const [customTitle, setCustomTitle] = useState(""); // for "Other"
   const [file, setFile] = useState(null);
   const [extraLink, setExtraLink] = useState("");
   const [sequenceNumber, setSequenceNumber] = useState("");
-  const [manualTitle, setManualTitle] = useState("");
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [disclosures, setDisclosures] = useState([]);
   const [editId, setEditId] = useState(null);
   const [editFields, setEditFields] = useState({});
+  const [editCustomTitle, setEditCustomTitle] = useState("");
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/disclosure`;
 
@@ -75,33 +76,48 @@ export default function DisclosuresAdmin() {
       return;
     }
 
-    if (isEdit) setEditFields({ ...editFields, fileObj: selectedFile });
-    else setFile(selectedFile);
+    if (isEdit)
+      setEditFields({ ...editFields, fileObj: selectedFile });
+    else
+      setFile(selectedFile);
   };
 
+  // ---------------- CREATE ----------------
   const handleCreate = async (e) => {
     e.preventDefault();
     setMessage("");
     setUploading(true);
 
+    const finalMainTitle =
+      mainTitle === "Other" ? customTitle : mainTitle;
 
     const formData = new FormData();
     formData.append("name", name);
     formData.append("date", date);
-    formData.append("mainTitle", mainTitle);
+    formData.append("mainTitle", finalMainTitle);
     formData.append("extraLink", extraLink);
     formData.append("sequenceNumber", sequenceNumber);
-    formData.append("manualTitle", manualTitle);
     if (file) formData.append("file", file);
 
     try {
-      const res = await fetch(`${API_BASE}/create_disclosure`, { method: "POST", body: formData });
+      const res = await fetch(`${API_BASE}/create_disclosure`, {
+        method: "POST",
+        body: formData
+      });
+
       const result = await res.json();
-      if (!res.ok) setMessage(result.message || "Error creating disclosure");
-      else {
+
+      if (!res.ok) {
+        setMessage(result.message || "Error creating disclosure");
+      } else {
         setMessage("Disclosure created successfully!");
-        setName(""); setDate(""); setMainTitle(""); setExtraLink(""); setFile(null);
-        setSequenceNumber(""); setManualTitle("");
+        setName("");
+        setDate("");
+        setMainTitle("");
+        setCustomTitle("");
+        setExtraLink("");
+        setFile(null);
+        setSequenceNumber("");
         fetchDisclosures();
       }
     } catch (err) {
@@ -112,14 +128,17 @@ export default function DisclosuresAdmin() {
     }
   };
 
+  // ---------------- DELETE ----------------
   const handleDelete = async (id) => {
     if (!window.confirm("Delete this disclosure?")) return;
+
     try {
       const res = await fetch(`${API_BASE}/delete`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id }),
+        body: JSON.stringify({ id })
       });
+
       const result = await res.json();
       if (res.ok) fetchDisclosures();
       else alert(result.message || "Delete failed");
@@ -128,40 +147,62 @@ export default function DisclosuresAdmin() {
     }
   };
 
+  // ---------------- EDIT ----------------
   const handleEdit = (disclosure) => {
     setEditId(disclosure._id);
+
+    const isPredefined = mainTitleOptions.includes(disclosure.mainTitle);
+
     setEditFields({
       name: disclosure.name,
       date: disclosure.date?.substring(0, 10) || "",
-      mainTitle: disclosure.mainTitle || "",
+      mainTitle: isPredefined ? disclosure.mainTitle : "Other",
       extraLink: disclosure.extraLink || "",
       sequenceNumber: disclosure.sequenceNumber || "",
-      manualTitle: disclosure.manualTitle || "",
-      fileObj: null,
+      fileObj: null
     });
+
+    if (!isPredefined) {
+      setEditCustomTitle(disclosure.mainTitle);
+    } else {
+      setEditCustomTitle("");
+    }
   };
 
   const handleUpdate = async (e) => {
     e.preventDefault();
     setUploading(true);
 
+    const finalMainTitle =
+      editFields.mainTitle === "Other"
+        ? editCustomTitle
+        : editFields.mainTitle;
+
     const formData = new FormData();
     formData.append("name", editFields.name);
     formData.append("date", editFields.date);
-    formData.append("mainTitle", editFields.mainTitle);
+    formData.append("mainTitle", finalMainTitle);
     formData.append("extraLink", editFields.extraLink);
     formData.append("sequenceNumber", editFields.sequenceNumber);
-    formData.append("manualTitle", editFields.manualTitle);
-    if (editFields.fileObj) formData.append("file", editFields.fileObj);
+    if (editFields.fileObj)
+      formData.append("file", editFields.fileObj);
 
     try {
-      const res = await fetch(`${API_BASE}/update_disclosure/${editId}`, { method: "PUT", body: formData });
+      const res = await fetch(
+        `${API_BASE}/update_disclosure/${editId}`,
+        { method: "PUT", body: formData }
+      );
+
       const result = await res.json();
+
       if (res.ok) {
         setEditId(null);
         setEditFields({});
+        setEditCustomTitle("");
         fetchDisclosures();
-      } else alert(result.message || "Update failed");
+      } else {
+        alert(result.message || "Update failed");
+      }
     } catch (err) {
       alert("Server error");
     } finally {
@@ -171,19 +212,32 @@ export default function DisclosuresAdmin() {
 
   return (
     <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Disclosures Management</h2>
+      <h2 className="text-2xl font-bold mb-6">
+        Disclosures Management
+      </h2>
 
-      {/* Edit Form on Top */}
+      {/* ---------------- EDIT FORM ---------------- */}
       {editId && (
         <div className="mb-6 p-6 border border-gray-300 rounded bg-gray-50 shadow">
-          <h3 className="text-xl font-semibold mb-4">Edit Disclosure</h3>
-          <form onSubmit={handleUpdate} className="grid gap-4 max-w-xl">
+          <h3 className="text-xl font-semibold mb-4">
+            Edit Disclosure
+          </h3>
+
+          <form
+            onSubmit={handleUpdate}
+            className="grid gap-4 max-w-xl"
+          >
             <label className="flex flex-col">
               Name
               <input
-                className="border border-gray-300 rounded p-2 mt-1"
+                className="border p-2 mt-1"
                 value={editFields.name}
-                onChange={(e) => setEditFields({ ...editFields, name: e.target.value })}
+                onChange={(e) =>
+                  setEditFields({
+                    ...editFields,
+                    name: e.target.value
+                  })
+                }
               />
             </label>
 
@@ -191,20 +245,32 @@ export default function DisclosuresAdmin() {
               Date
               <input
                 type="date"
-                className="border border-gray-300 rounded p-2 mt-1"
+                className="border p-2 mt-1"
                 value={editFields.date}
-                onChange={(e) => setEditFields({ ...editFields, date: e.target.value })}
+                onChange={(e) =>
+                  setEditFields({
+                    ...editFields,
+                    date: e.target.value
+                  })
+                }
               />
             </label>
 
             <label className="flex flex-col">
               Main Title
               <select
-                className="border border-gray-300 rounded p-2 mt-1"
-                value={editFields.mainTitle || ""}
-                onChange={(e) => setEditFields({ ...editFields, mainTitle: e.target.value })}
+                className="border p-2 mt-1"
+                value={editFields.mainTitle}
+                onChange={(e) =>
+                  setEditFields({
+                    ...editFields,
+                    mainTitle: e.target.value
+                  })
+                }
               >
-                <option value="">-- Select Main Title (optional) --</option>
+                <option value="">
+                  -- Select Main Title --
+                </option>
                 {mainTitleOptions.map((opt) => (
                   <option key={opt} value={opt}>
                     {opt}
@@ -215,35 +281,43 @@ export default function DisclosuresAdmin() {
 
             {editFields.mainTitle === "Other" && (
               <label className="flex flex-col">
-                Manual Title
+                Enter Custom Title
                 <input
-                  className="border border-gray-300 rounded p-2 mt-1"
-                  value={editFields.manualTitle}
-                  onChange={(e) => setEditFields({ ...editFields, manualTitle: e.target.value })}
-                  placeholder="Enter manual title"
+                  className="border p-2 mt-1"
+                  value={editCustomTitle}
+                  onChange={(e) =>
+                    setEditCustomTitle(e.target.value)
+                  }
                 />
               </label>
             )}
 
             <label className="flex flex-col">
-              Sequence Number (optional)
+              Sequence Number
               <input
                 type="number"
-                className="border border-gray-300 rounded p-2 mt-1"
-                placeholder="e.g., 1, 2, 3..."
+                className="border p-2 mt-1"
                 value={editFields.sequenceNumber}
-                onChange={(e) => setEditFields({ ...editFields, sequenceNumber: e.target.value })}
+                onChange={(e) =>
+                  setEditFields({
+                    ...editFields,
+                    sequenceNumber: e.target.value
+                  })
+                }
               />
             </label>
 
             <label className="flex flex-col">
-              Extra Link (optional)
+              Extra Link
               <input
-                type="text"
-                className="border border-gray-300 rounded p-2 mt-1"
-                placeholder="e.g., https://..."
-                value={editFields.extraLink || ""}
-                onChange={(e) => setEditFields({ ...editFields, extraLink: e.target.value })}
+                className="border p-2 mt-1"
+                value={editFields.extraLink}
+                onChange={(e) =>
+                  setEditFields({
+                    ...editFields,
+                    extraLink: e.target.value
+                  })
+                }
               />
             </label>
 
@@ -252,8 +326,9 @@ export default function DisclosuresAdmin() {
               <input
                 type="file"
                 accept=".pdf"
-                onChange={(e) => handleFileSelect(e, true)}
-                className="mt-1"
+                onChange={(e) =>
+                  handleFileSelect(e, true)
+                }
               />
             </label>
 
@@ -261,14 +336,17 @@ export default function DisclosuresAdmin() {
               <button
                 type="submit"
                 disabled={uploading}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                className="bg-blue-600 text-white px-4 py-2 rounded"
               >
-                {uploading ? "Updating..." : "Update Disclosure"}
+                {uploading
+                  ? "Updating..."
+                  : "Update Disclosure"}
               </button>
+
               <button
                 type="button"
                 onClick={() => setEditId(null)}
-                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+                className="bg-gray-300 px-4 py-2 rounded"
               >
                 Cancel
               </button>
@@ -277,16 +355,24 @@ export default function DisclosuresAdmin() {
         </div>
       )}
 
-      {/* Create Form */}
+      {/* ---------------- CREATE FORM ---------------- */}
       <div className="mb-6 p-6 border border-gray-300 rounded bg-white shadow">
-        <h3 className="text-xl font-semibold mb-4">Add New Disclosure</h3>
-        <form onSubmit={handleCreate} className="grid gap-4 max-w-xl">
+        <h3 className="text-xl font-semibold mb-4">
+          Add New Disclosure
+        </h3>
+
+        <form
+          onSubmit={handleCreate}
+          className="grid gap-4 max-w-xl"
+        >
           <label className="flex flex-col">
             Name
             <input
-              className="border border-gray-300 rounded p-2 mt-1"
+              className="border p-2 mt-1"
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={(e) =>
+                setName(e.target.value)
+              }
             />
           </label>
 
@@ -294,20 +380,26 @@ export default function DisclosuresAdmin() {
             Date
             <input
               type="date"
-              className="border border-gray-300 rounded p-2 mt-1"
+              className="border p-2 mt-1"
               value={date}
-              onChange={(e) => setDate(e.target.value)}
+              onChange={(e) =>
+                setDate(e.target.value)
+              }
             />
           </label>
 
           <label className="flex flex-col">
             Main Title
             <select
-              className="border border-gray-300 rounded p-2 mt-1"
+              className="border p-2 mt-1"
               value={mainTitle}
-              onChange={(e) => setMainTitle(e.target.value)}
+              onChange={(e) =>
+                setMainTitle(e.target.value)
+              }
             >
-              <option value="">-- Select Main Title (optional) --</option>
+              <option value="">
+                -- Select Main Title --
+              </option>
               {mainTitleOptions.map((opt) => (
                 <option key={opt} value={opt}>
                   {opt}
@@ -318,35 +410,37 @@ export default function DisclosuresAdmin() {
 
           {mainTitle === "Other" && (
             <label className="flex flex-col">
-              Manual Title
+              Enter Custom Title
               <input
-                className="border border-gray-300 rounded p-2 mt-1"
-                value={manualTitle}
-                onChange={(e) => setManualTitle(e.target.value)}
-                placeholder="Enter manual title"
+                className="border p-2 mt-1"
+                value={customTitle}
+                onChange={(e) =>
+                  setCustomTitle(e.target.value)
+                }
               />
             </label>
           )}
 
           <label className="flex flex-col">
-            Sequence Number (optional)
+            Sequence Number
             <input
               type="number"
-              className="border border-gray-300 rounded p-2 mt-1"
-              placeholder="e.g., 1, 2, 3..."
+              className="border p-2 mt-1"
               value={sequenceNumber}
-              onChange={(e) => setSequenceNumber(e.target.value)}
+              onChange={(e) =>
+                setSequenceNumber(e.target.value)
+              }
             />
           </label>
 
           <label className="flex flex-col">
-            Extra Link (optional)
+            Extra Link
             <input
-              type="text"
-              className="border border-gray-300 rounded p-2 mt-1"
-              placeholder="e.g., https://..."
+              className="border p-2 mt-1"
               value={extraLink}
-              onChange={(e) => setExtraLink(e.target.value)}
+              onChange={(e) =>
+                setExtraLink(e.target.value)
+              }
             />
           </label>
 
@@ -356,49 +450,94 @@ export default function DisclosuresAdmin() {
               type="file"
               accept=".pdf"
               onChange={handleFileSelect}
-              className="mt-1"
             />
           </label>
 
           <button
             type="submit"
             disabled={uploading}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+            className="bg-green-600 text-white px-4 py-2 rounded"
           >
-            {uploading ? "Uploading..." : "Add Disclosure"}
+            {uploading
+              ? "Uploading..."
+              : "Add Disclosure"}
           </button>
 
-          {message && <p className={`mt-2 ${message.includes("successfully") ? "text-green-600" : "text-red-600"}`}>{message}</p>}
+          {message && (
+            <p
+              className={`mt-2 ${
+                message.includes("successfully")
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}
+            >
+              {message}
+            </p>
+          )}
         </form>
       </div>
 
-      {/* Disclosures Table */}
-      <h3 className="text-xl font-semibold mb-4">All Disclosures</h3>
+      {/* ---------------- TABLE ---------------- */}
+      <h3 className="text-xl font-semibold mb-4">
+        All Disclosures
+      </h3>
+
       <DataTable
         columns={[
           { key: "name", label: "Name" },
           { key: "sequenceNumber", label: "Seq" },
           { key: "date", label: "Date" },
+          { key: "mainTitle", label: "Main Title" },
           {
-            key: "mainTitle",
-            label: "Main Title",
-            render: (r) => r.mainTitle === "Other" ? `Other: ${r.manualTitle}` : r.mainTitle
+            key: "file",
+            label: "File",
+            render: (r) =>
+              r.file ? (
+                <a
+                  href={r.file}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-blue-600 underline"
+                >
+                  View
+                </a>
+              ) : (
+                "-"
+              )
           },
-          { key: "file", label: "File", render: (r) => r.file ? <a href={r.file} target="_blank" className="text-blue-600 underline">View</a> : "-" },
-          { key: "extraLink", label: "Extra Link", render: (r) => r.extraLink ? <a href={r.extraLink} target="_blank" className="text-blue-600 underline">View</a> : "-" },
+          {
+            key: "extraLink",
+            label: "Extra Link",
+            render: (r) =>
+              r.extraLink ? (
+                <a
+                  href={r.extraLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-blue-600 underline"
+                >
+                  View
+                </a>
+              ) : (
+                "-"
+              )
+          }
         ]}
         data={disclosures}
         actions={(row) => (
           <div className="flex gap-2">
             <button
-              className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
+              className="bg-blue-600 text-white px-2 py-1 rounded"
               onClick={() => handleEdit(row)}
             >
               Edit
             </button>
+
             <button
-              className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
-              onClick={() => handleDelete(row._id)}
+              className="bg-red-600 text-white px-2 py-1 rounded"
+              onClick={() =>
+                handleDelete(row._id)
+              }
             >
               Delete
             </button>
