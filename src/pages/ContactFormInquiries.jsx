@@ -83,6 +83,7 @@ export default function ContactFormInquiries() {
               { key: "fullName", label: "Full Name" },
               { key: "email", label: "Email" },
               { key: "phone", label: "Phone" },
+              { key: "inquiryMessage", label: "Message" },
               { key: "companyName", label: "Company" },
               {
                 key: "status",
