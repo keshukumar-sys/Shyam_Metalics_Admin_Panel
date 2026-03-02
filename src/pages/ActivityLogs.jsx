@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import DataTable from "../components/DataTable";
 import { authHeader } from "../auth";
+import { RefreshCw, Plus, Trash2, Eye, Loader2, AlertCircle, Info } from "lucide-react";
 
 const API_BASE = "https://shyam-metalics-backend-kzr8.onrender.com";
 const DEFAULT_LIMIT = parseInt(import.meta.env.VITE_LOGS_LIMIT || "200", 10);
@@ -16,7 +17,7 @@ const ActivityLogs = () => {
     setError(null);
     try {
       const res = await fetch(
-        `${API_BASE}/logs?page=1&limit=${DEFAULT_LIMIT}`,
+        `${API_BASE}/logs`,
         { headers: authHeader() }
       );
       if (!res.ok) throw new Error("Failed to fetch logs");
@@ -43,6 +44,7 @@ const ActivityLogs = () => {
       });
       setLogs((s) => s.filter((l) => l._id !== id));
       setMessage("Log deleted successfully");
+      setTimeout(() => setMessage(null), 3000);
     } catch {
       setError("Failed to delete log");
     }
@@ -61,6 +63,7 @@ const ActivityLogs = () => {
       });
       setLogs([]);
       setMessage("All activity logs deleted");
+      setTimeout(() => setMessage(null), 3000);
     } catch {
       setError("Failed to delete all logs");
     } finally {
@@ -79,6 +82,7 @@ const ActivityLogs = () => {
       const json = await res.json();
       if (json?.data) setLogs((s) => [json.data, ...s]);
       setMessage("Test log created");
+      setTimeout(() => setMessage(null), 3000);
     } catch {
       setError("Failed to create test log");
     }
@@ -88,81 +92,120 @@ const ActivityLogs = () => {
     {
       key: "createdAt",
       label: "Time",
-      render: (r) => new Date(r.createdAt).toLocaleString(),
+      render: (r) => (
+        <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+          {new Date(r.createdAt).toLocaleString()}
+        </span>
+      ),
     },
     { key: "email", label: "User" },
-    { key: "action", label: "Action" },
+    {
+      key: "action",
+      label: "Action",
+      render: (r) => (
+        <span className={`badge ${r.method === 'DELETE' ? 'badge-danger' : 'badge-info'}`} style={{
+          background: r.method === 'DELETE' ? '#fee2e2' : '#dcfce7',
+          color: r.method === 'DELETE' ? '#991b1b' : '#166534',
+          padding: '2px 8px',
+          borderRadius: '12px',
+          fontSize: '0.7rem',
+          fontWeight: '600'
+        }}>
+          {r.action}
+        </span>
+      )
+    },
     { key: "method", label: "Method" },
     { key: "route", label: "Route" },
-    { key: "status", label: "Status" },
     {
-      key: "duration",
-      label: "Duration",
-      render: (r) =>
-        r.metadata?.durationMs ? `${r.metadata.durationMs}ms` : "-",
+      key: "status",
+      label: "Status",
+      render: (r) => (
+        <span style={{ color: r.status >= 400 ? 'var(--danger)' : 'var(--success)', fontWeight: '600' }}>
+          {r.status}
+        </span>
+      )
     },
   ];
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2 style={{ marginBottom: 12 }}>🧾 Activity Logs</h2>
-
-      {/* ACTION BAR */}
-      <div
-        style={{
-          display: "flex",
-          gap: 10,
-          marginBottom: 16,
-          flexWrap: "wrap",
-        }}
-      >
-        <button onClick={fetchLogs} disabled={loading}>
-          🔄 Refresh
-        </button>
-
-        <button onClick={createTestLog} disabled={loading}>
-          ➕ Create Test Log
-        </button>
-
-        <button
-          onClick={handleDeleteAll}
-          disabled={loading}
-          style={{
-            background: "#d32f2f",
-            color: "#fff",
-            border: "none",
-            padding: "6px 12px",
-            cursor: "pointer",
-          }}
-        >
-          🗑️ Delete All Logs
-        </button>
-
-        {message && <span style={{ color: "green" }}>{message}</span>}
-        {error && <span style={{ color: "red" }}>{error}</span>}
+    <div>
+      <div className="page-header">
+        <div>
+          <h2>Activity Logs</h2>
+          <p className="muted">Track system changes and user operations.</p>
+        </div>
+        <div style={{ display: "flex", gap: "0.75rem" }}>
+          <button className="btn-outline" onClick={fetchLogs} disabled={loading}>
+            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+            Refresh
+          </button>
+          <button className="btn-outline" onClick={createTestLog} disabled={loading}>
+            <Plus size={18} />
+            Test Log
+          </button>
+          <button
+            className="btn-primary"
+            style={{ background: "var(--danger)" }}
+            onClick={handleDeleteAll}
+            disabled={loading}
+          >
+            <Trash2 size={18} />
+            Clear All
+          </button>
+        </div>
       </div>
 
-      {/* TABLE */}
-      {loading ? (
-        <p>Loading logs...</p>
-      ) : (
-        <DataTable
-          columns={columns}
-          data={logs}
-          actions={(row) => (
-            <div style={{ display: "flex", gap: 8 }}>
-              <button
-                onClick={() =>
-                  alert(JSON.stringify(row.metadata || {}, null, 2))
-                }
-              >
-                View
-              </button>
-              <button onClick={() => handleDelete(row._id)}>Delete</button>
-            </div>
-          )}
-        />
-      )}
+      <div className="card" style={{ padding: "1.5rem" }}>
+        {message && (
+          <div className="form-msg success">
+            <Info size={18} />
+            {message}
+          </div>
+        )}
+        {error && (
+          <div className="form-msg error">
+            <AlertCircle size={18} />
+            {error}
+          </div>
+        )}
+
+        {loading && logs.length === 0 ? (
+          <div style={{ padding: "3rem", textAlign: "center", color: "var(--text-muted)" }}>
+            <Loader2 size={32} className="animate-spin" style={{ margin: "0 auto 1rem" }} />
+            <p>Loading activity logs...</p>
+          </div>
+        ) : (
+          <DataTable
+            columns={columns}
+            data={logs}
+            actions={(row) => (
+              <div className="dt-actions">
+                <button
+                  className="btn-outline btn-sm"
+                  onClick={() => alert(JSON.stringify(row.metadata || {}, null, 2))}
+                  title="View Details"
+                >
+                  <Eye size={16} />
+                </button>
+                <button
+                  className="btn-outline btn-sm"
+                  style={{ color: "var(--danger)" }}
+                  onClick={() => handleDelete(row._id)}
+                  title="Delete"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            )}
+          />
+        )}
+      </div>
+
+      <style>{`
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 };

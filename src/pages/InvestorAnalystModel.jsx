@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import DataTable from "../components/DataTable";
+import { Edit, Trash2, Plus, Loader2, FileText, Calendar, Filter, X, Users, Mic, Presentation, Info } from "lucide-react";
+import "../components/css/Form.css";
 import { authHeader } from "../auth";
 
 export default function InvestorAnalystModel() {
-  const [titlename, setTitlename] = useState("Investors/Analyst Meet"); // Main title dropdown
+  const [titlename, setTitlename] = useState("Investors/Analyst Meet");
   const [name, setName] = useState("");
   const [date, setDate] = useState("");
   const [file, setFile] = useState(null);
@@ -11,12 +13,17 @@ export default function InvestorAnalystModel() {
   const [uploading, setUploading] = useState(false);
   const [list, setList] = useState([]);
   const [editId, setEditId] = useState(null);
-  const [editName, setEditName] = useState("");
-  const [editDate, setEditDate] = useState("");
-  const [editFile, setEditFile] = useState(null);
-  const [editTitlename, setEditTitlename] = useState("Investors/Analyst Meet");
+  const [editFields, setEditFields] = useState({ name: "", date: "", titlename: "Investors/Analyst Meet", file: null });
 
   const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/investor-analyst`;
+
+  const titleOptions = [
+    "Investors/Analyst Meet",
+    "Investor Presentation",
+    "Transcript",
+    "Investor Call Intimation",
+    "Investor Call Recording",
+  ];
 
   useEffect(() => {
     fetchList();
@@ -27,7 +34,6 @@ export default function InvestorAnalystModel() {
       const res = await fetch(`${API_BASE}/get_investor_analyst`, { headers: authHeader() });
       if (!res.ok) throw new Error("Failed to fetch");
       const json = await res.json();
-      setTitlename(json.titlename || "Investors/Analyst Meet");
       setList(json.data || []);
     } catch (err) {
       console.error(err);
@@ -35,17 +41,21 @@ export default function InvestorAnalystModel() {
     }
   };
 
-  // ================= ADD ENTRY =================
+  const resetForm = () => {
+    setName(""); setDate(""); setFile(null);
+    setEditId(null); setEditFields({ name: "", date: "", titlename: "Investors/Analyst Meet", file: null });
+    setMessage("");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setMessage("");
-    setUploading(true);
-
     if (!name || !date || !file) {
-      setMessage("Please provide name, date, and a file.");
-      setUploading(false);
+      setMessage("Please provide all required fields.");
       return;
     }
+
+    setUploading(true);
+    setMessage("");
 
     try {
       const formData = new FormData();
@@ -60,16 +70,14 @@ export default function InvestorAnalystModel() {
         body: formData,
       });
 
-      const result = await res.json();
       if (!res.ok) {
+        const result = await res.json();
         setMessage(result.message || "Upload failed");
         return;
       }
 
-      setMessage(result.message || "Detail added successfully");
-      setName("");
-      setDate("");
-      setFile(null);
+      setMessage("Record added successfully!");
+      resetForm();
       fetchList();
     } catch (err) {
       console.error(err);
@@ -79,45 +87,40 @@ export default function InvestorAnalystModel() {
     }
   };
 
-  // ================= DELETE ENTRY =================
   const handleDelete = async (id) => {
-    if (!window.confirm("Are you sure you want to delete this entry?")) return;
+    if (!window.confirm("Are you sure you want to delete this record?")) return;
     try {
       const res = await fetch(`${API_BASE}/delete`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json", ...authHeader() },
         body: JSON.stringify({ id }),
       });
-      const json = await res.json();
-      if (!res.ok) return alert(json.message || "Delete failed");
-      fetchList();
+      if (res.ok) fetchList();
+      else alert("Delete failed");
     } catch (e) {
       alert("Network error");
     }
   };
 
-  // ================= EDIT ENTRY =================
   const handleEdit = (row) => {
     setEditId(row._id);
-    setEditName(row.investor_analyst_name);
-    setEditDate(row.investor_analyst_date.split("T")[0]);
-    setEditFile(null);
-    setEditTitlename(titlename);
+    setEditFields({
+      name: row.investor_analyst_name,
+      date: row.investor_analyst_date?.split("T")[0] || "",
+      titlename: row.titlename,
+      file: null
+    });
   };
 
-  const handleUpdateSubmit = async (e) => {
+  const handleUpdate = async (e) => {
     e.preventDefault();
-    if (!editName || !editDate) {
-      alert("Please fill all fields");
-      return;
-    }
     setUploading(true);
     try {
       const formData = new FormData();
-      formData.append("titlename", editTitlename);
-      formData.append("investor_analyst_name", editName);
-      formData.append("investor_analyst_date", editDate);
-      if (editFile) formData.append("file", editFile);
+      formData.append("titlename", editFields.titlename);
+      formData.append("investor_analyst_name", editFields.name);
+      formData.append("investor_analyst_date", editFields.date);
+      if (editFields.file) formData.append("file", editFields.file);
 
       const res = await fetch(`${API_BASE}/update_investor_analyst/${editId}`, {
         method: "PUT",
@@ -125,204 +128,246 @@ export default function InvestorAnalystModel() {
         body: formData,
       });
 
-      const json = await res.json();
-      if (!res.ok) return alert(json.message || "Update failed");
-
-      setEditId(null);
-      fetchList();
+      if (res.ok) {
+        resetForm();
+        fetchList();
+      } else alert("Update failed");
     } catch (e) {
       console.error(e);
-      alert("Network error: " + e.message);
+      alert("Network error");
     } finally {
       setUploading(false);
     }
   };
 
-  return (
-    <div className="max-w-5xl mx-auto p-6 bg-gray-50 min-h-screen">
-      <h2 className="text-2xl font-bold mb-6 text-gray-800">Investor / Analyst Details</h2>
+  const getIcon = (type) => {
+    switch (type) {
+      case "Transcript": return <FileText size={18} />;
+      case "Investor Call Recording": return <Mic size={18} />;
+      case "Investor Presentation": return <Presentation size={18} />;
+      case "Investor Call Intimation": return <Info size={18} />;
+      default: return <Users size={18} />;
+    }
+  };
 
-      {/* ================= TITLE DROPDOWN ================= */}
-      <div className="mb-6">
-        <label className="block text-gray-700 font-semibold mb-2">Title Name</label>
-        <select
-          value={titlename}
-          onChange={(e) => setTitlename(e.target.value)}
-          className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-        >
-          <option value="Investors/Analyst Meet">Investors/Analyst Meet</option>
-            <option value="Investor Presentation">Investor Presentation</option>
-            <option value="Transcript">Transcript</option>
-            <option value="Investor Call Intimation">Investor Call Intimation</option>
-            <option value="Investor Call Recording">Investor Call Recording</option>
-        </select>
+  return (
+    <div>
+      <div className="page-header">
+        <div>
+          <h2>Investor & Analyst Relations</h2>
+          <p className="muted">Manage meetings, presentations, transcripts, and call recordings.</p>
+        </div>
       </div>
 
-      {/* ================= ADD FORM ================= */}
-      <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
-        <div className="col-span-1 md:col-span-1">
-          <label className="block mb-1 font-medium text-gray-700">Name</label>
-          <input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Enter name"
-            required
-            className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
+      <div className="form-card">
+        <div className="form-header">
+          <h3>Add New Record</h3>
+          <p>Select category and upload related documents or files.</p>
         </div>
 
-        <div className="col-span-1 md:col-span-1">
-          <label className="block mb-1 font-medium text-gray-700">Date</label>
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => setDate(e.target.value)}
-            required
-            className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-          />
-        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="form-grid">
+            <div className="form-group">
+              <label>Category</label>
+              <div className="input-with-icon">
+                <Filter size={18} />
+                <select value={titlename} onChange={(e) => setTitlename(e.target.value)}>
+                  {titleOptions.map((opt) => (
+                    <option key={opt} value={opt}>{opt}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
 
-        <div className="col-span-1 md:col-span-1">
-          <label className="block mb-1 font-medium text-gray-700">File</label>
-          <input
-            type="file"
-            onChange={(e) => setFile(e.target.files?.[0])}
-            required
-            className="w-full"
-          />
-        </div>
-
-        <div className="col-span-1 md:col-span-3 mt-4">
-          <button
-            type="submit"
-            disabled={uploading}
-            className="bg-indigo-600 text-white font-semibold px-6 py-2 rounded-lg hover:bg-indigo-700 transition"
-          >
-            {uploading ? "Uploading..." : "Add Detail"}
-          </button>
-          {message && <div className="mt-2 text-green-600">{message}</div>}
-        </div>
-      </form>
-
-      {/* ================= ENTRIES TABLE ================= */}
-      <section>
-        <h3 className="text-xl font-semibold mb-4 text-gray-700">Entries</h3>
-        <DataTable
-  columns={[
-    { key: "titlename", label: "Title Name" }, 
-    { key: "investor_analyst_name", label: "Name" },
-    {
-      key: "investor_analyst_date",
-      label: "Date",
-      render: (r) => new Date(r.investor_analyst_date).toLocaleDateString(),
-    },
-    {
-      key: "investor_analyst_file",
-      label: "File",
-      render: (r) =>
-        r.investor_analyst_file ? (
-          <a
-            href={r.investor_analyst_file}
-            target="_blank"
-            rel="noreferrer"
-            className="text-indigo-600 hover:underline"
-          >
-            View
-          </a>
-        ) : (
-          "-"
-        ),
-    },
-  ]}
-  // Filter the list by currently selected titlename
-  data={list.filter(item => item.titlename === titlename)}
-  actions={(row) => (
-    <div className="flex gap-2 justify-center">
-      <button
-        className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600"
-        onClick={() => handleEdit(row)}
-      >
-        Edit
-      </button>
-      <button
-        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-        onClick={() => handleDelete(row._id)}
-      >
-        Delete
-      </button>
-    </div>
-  )}
-/>
-
-
-      </section>
-
-      {/* ================= EDIT FORM ================= */}
-      {editId && (
-        <div className="mt-10 p-6 border border-gray-300 rounded-lg bg-white shadow-md">
-          <h3 className="text-xl font-semibold mb-4 text-gray-700">Edit Entry</h3>
-          <form onSubmit={handleUpdateSubmit} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block mb-1 font-medium text-gray-700">Name</label>
+            <div className="form-group">
+              <label>Meeting / Presentation Name</label>
               <input
-                value={editName}
-                onChange={(e) => setEditName(e.target.value)}
-                className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                placeholder="e.g. Q4 Analyst Meet - Mumbai"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                required
               />
             </div>
 
-            <div>
-              <label className="block mb-1 font-medium text-gray-700">Date</label>
-              <input
-                type="date"
-                value={editDate}
-                onChange={(e) => setEditDate(e.target.value)}
-                className="w-full border rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              />
+            <div className="form-group">
+              <label>Event Date</label>
+              <div className="input-with-icon">
+                <Calendar size={18} />
+                <input
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                  required
+                />
+              </div>
             </div>
 
-            <div>
-              <label className="block mb-1 font-medium text-gray-700">File (optional)</label>
-              <input
-                type="file"
-                onChange={(e) => setEditFile(e.target.files?.[0])}
-                className="w-full"
-              />
+            <div className="form-group">
+              <label>Upload File (PDF/Docs/Audio)</label>
+              <div className="input-with-icon">
+                <FileText size={18} />
+                <input
+                  type="file"
+                  className="form-input"
+                  onChange={(e) => setFile(e.target.files?.[0])}
+                  required
+                />
+              </div>
             </div>
+          </div>
 
-            <div className="col-span-1 md:col-span-3">
-              <label className="block mb-1 font-medium text-gray-700">Title Name</label>
-              <select
-                value={editTitlename}
-                onChange={(e) => setEditTitlename(e.target.value)}
-                className="w-full border border-gray-300 rounded-lg p-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-              >
-                <option value="Investors/Analyst Meet">Investors/Analyst Meet</option>
-                <option value="Investor Presentation">Investor Presentation</option>
-                <option value="Transcript">Transcript</option>
-                <option value="Investor Call Intimation">Investor Call Intimation</option>
-                <option value="Investor Call Recording">Investor Call Recording</option>
+          {message && (
+            <div className={`form-msg ${message.includes("successfully") ? "success" : "error"}`}>
+              {message}
+            </div>
+          )}
+
+          <div className="form-actions">
+            <button type="submit" className="btn-primary" disabled={uploading}>
+              {uploading ? <><Loader2 className="animate-spin" size={18} /> Uploading...</> : <><Plus size={18} /> Add Record</>}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <section className="card" style={{ marginTop: "2rem", padding: "1.5rem" }}>
+        <div className="form-header" style={{ border: "none", marginBottom: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+            <div className="category-filter">
+              <Filter size={16} />
+              <select value={titlename} onChange={(e) => setTitlename(e.target.value)} style={{ border: "none", background: "transparent", fontWeight: "600", outline: "none" }}>
+                <option value="">All Categories</option>
+                {titleOptions.map((opt) => (
+                  <option key={opt} value={opt}>{opt}</option>
+                ))}
               </select>
             </div>
+          </div>
+          <div className="badge secondary">{list.filter(item => !titlename || item.titlename === titlename).length} Entries</div>
+        </div>
 
-            <div className="col-span-1 md:col-span-3 flex gap-4 mt-4">
-              <button
-                type="submit"
-                className="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition"
-              >
-                Update
+        <DataTable
+          columns={[
+            {
+              key: "investor_analyst_name",
+              label: "Record Details",
+              render: (r) => (
+                <div style={{ display: "flex", alignItems: "center", gap: "0.8rem" }}>
+                  <div className="icon-badge">{getIcon(r.titlename)}</div>
+                  <div>
+                    <div style={{ fontWeight: "600", color: "var(--text-main)" }}>{r.investor_analyst_name}</div>
+                    <div className="muted" style={{ fontSize: "0.75rem" }}>{r.titlename}</div>
+                  </div>
+                </div>
+              )
+            },
+            {
+              key: "investor_analyst_date",
+              label: "Date",
+              width: "150px",
+              render: (r) => (
+                <div className="muted" style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                  <Calendar size={14} /> {new Date(r.investor_analyst_date).toLocaleDateString()}
+                </div>
+              )
+            },
+            {
+              key: "investor_analyst_file",
+              label: "File",
+              width: "100px",
+              render: (r) => r.investor_analyst_file ? (
+                <a href={r.investor_analyst_file} target="_blank" rel="noreferrer" className="btn-outline btn-sm">
+                  <FileText size={14} /> View
+                </a>
+              ) : "-"
+            }
+          ]}
+          data={list.filter(item => !titlename || item.titlename === titlename)}
+          actions={(row) => (
+            <div className="dt-actions">
+              <button className="btn-outline btn-sm" style={{ color: "var(--primary)" }} onClick={() => handleEdit(row)} title="Edit">
+                <Edit size={16} />
               </button>
-              <button
-                type="button"
-                onClick={() => setEditId(null)}
-                className="bg-gray-300 text-gray-700 px-6 py-2 rounded hover:bg-gray-400 transition"
-              >
-                Cancel
+              <button className="btn-outline btn-sm" style={{ color: "var(--danger)" }} onClick={() => handleDelete(row._id)} title="Delete">
+                <Trash2 size={16} />
               </button>
             </div>
-          </form>
+          )}
+        />
+      </section>
+
+      {editId && (
+        <div className="modal-overlay">
+          <div className="form-card" style={{ maxWidth: "600px" }}>
+            <div className="form-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h3>Edit Record</h3>
+                <p>Modify event details or replace files.</p>
+              </div>
+              <button className="btn-outline btn-sm" onClick={resetForm}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdate}>
+              <div className="form-grid">
+                <div className="form-group full-width">
+                  <label>Category</label>
+                  <select value={editFields.titlename} onChange={(e) => setEditFields({ ...editFields, titlename: e.target.value })}>
+                    {titleOptions.map((opt) => (
+                      <option key={opt} value={opt}>{opt}</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-group full-width">
+                  <label>Record Name</label>
+                  <input value={editFields.name} onChange={(e) => setEditFields({ ...editFields, name: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label>Date</label>
+                  <input type="date" value={editFields.date} onChange={(e) => setEditFields({ ...editFields, date: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label>Replace File (Optional)</label>
+                  <input type="file" className="form-input" onChange={(e) => setEditFields({ ...editFields, file: e.target.files?.[0] })} />
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button type="button" className="btn-outline" onClick={resetForm}>Cancel</button>
+                <button type="submit" className="btn-primary" disabled={uploading}>
+                  {uploading ? <Loader2 className="animate-spin" size={18} /> : "Save Changes"}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
+
+      <style>{`
+        .icon-badge {
+          width: 40px; height: 40px; border-radius: 8px;
+          background: var(--bg-secondary); display: flex;
+          align-items: center; justify-content: center;
+          color: var(--primary);
+        }
+        .category-filter {
+          display: flex; align-items: center; gap: 0.5rem;
+          padding: 0.5rem 1rem; background: var(--bg-secondary);
+          border-radius: 8px; border: 1px solid var(--border-color);
+        }
+        .modal-overlay {
+          position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center;
+          z-index: 1000; padding: 1.5rem;
+        }
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .badge {
+          padding: 0.25rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600;
+        }
+        .badge.secondary { background: var(--bg-secondary); color: var(--text-main); border: 1px solid var(--border-color); }
+      `}</style>
     </div>
   );
 }

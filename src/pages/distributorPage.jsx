@@ -1,210 +1,275 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Pencil, Trash2, ChevronLeft, ChevronRight, Search, X } from 'lucide-react';
+import DataTable from "../components/DataTable";
+import {
+  Users, MapPin, Phone, User, Search,
+  Plus, Pencil, Trash2, Loader2, Info,
+  CheckCircle2, XCircle, Filter
+} from 'lucide-react';
+import "../components/css/Form.css";
 
-const API_URL =  `${import.meta.env.VITE_API_BASE}/distributors` || "http://localhost:3002/distributors";
+const API_URL = `${import.meta.env.VITE_API_BASE}/distributors`;
 
 const AdminDistributor = () => {
-  // --- State Management ---
   const [distributors, setDistributors] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [formData, setFormData] = useState({ customerName: '', contactNumber: '', district: '', state: '' });
+  const [submitting, setSubmitting] = useState(false);
+  const [formData, setFormData] = useState({
+    customerName: '',
+    contactNumber: '',
+    district: '',
+    state: ''
+  });
   const [editId, setEditId] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const [message, setMessage] = useState("");
 
-  // --- Fetch Data ---
   const fetchDistributors = async () => {
     setLoading(true);
     try {
       const res = await axios.get(API_URL);
-      setDistributors(res.data.data);
+      setDistributors(res.data.data || []);
     } catch (err) {
       console.error("Fetch error:", err);
+      setMessage("Failed to load distributors.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
-  useEffect(() => { fetchDistributors(); }, []);
+  useEffect(() => {
+    fetchDistributors();
+  }, []);
 
-  // --- Search & Filter Logic ---
-  const filteredItems = distributors.filter(item => 
-    item.district.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    item.state.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  // --- Pagination Logic (Windowed) ---
-  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = filteredItems.slice(indexOfFirstItem, indexOfLastItem);
-
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
-
-  const getPageNumbers = () => {
-    const pageNumbers = [];
-    const maxPageButtons = 5; 
-
-    if (totalPages <= maxPageButtons) {
-      for (let i = 1; i <= totalPages; i++) pageNumbers.push(i);
-    } else {
-      pageNumbers.push(1);
-      if (currentPage > 3) pageNumbers.push('...');
-      
-      let start = Math.max(2, currentPage - 1);
-      let end = Math.min(totalPages - 1, currentPage + 1);
-      
-      for (let i = start; i <= end; i++) pageNumbers.push(i);
-      
-      if (currentPage < totalPages - 2) pageNumbers.push('...');
-      if (totalPages > 1) pageNumbers.push(totalPages);
-    }
-    return pageNumbers;
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
-
-  // --- Form Actions ---
-  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setSubmitting(true);
+    setMessage("");
     try {
       if (editId) {
         await axios.put(`${API_URL}/${editId}`, formData);
+        setMessage("Distributor record updated successfully");
       } else {
         await axios.post(`${API_URL}/create`, formData);
+        setMessage("New distributor added successfully");
       }
       setFormData({ customerName: '', contactNumber: '', district: '', state: '' });
       setEditId(null);
       fetchDistributors();
     } catch (err) {
-      alert("Operation failed");
+      setMessage("Error performing operation. Please try again.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
-    if (window.confirm("Delete this record?")) {
-      try {
-        await axios.delete(`${API_URL}/${id}`);
-        fetchDistributors();
-      } catch (err) {
-        alert("Delete failed");
-      }
+    if (!window.confirm("Permanently remove this distributor from the network?")) return;
+    try {
+      await axios.delete(`${API_URL}/${id}`);
+      fetchDistributors();
+      setMessage("Distributor deleted successfully");
+    } catch (err) {
+      setMessage("Delete failed. Please try again.");
     }
   };
 
-  // --- Styles ---
-  const tableHeaderStyle = { padding: '12px', textAlign: 'left', background: '#f8f9fa', whiteSpace: 'nowrap', borderBottom: '2px solid #dee2e6' };
-  const tableCellStyle = { padding: '10px', borderBottom: '1px solid #eee', fontSize: '14px', whiteSpace: 'nowrap' };
-  const inputStyle = { padding: '10px', borderRadius: '4px', border: '1px solid #ccc', outline: 'none' };
-  const actionBtn = { background: 'none', border: 'none', cursor: 'pointer', color: '#007bff', padding: '4px' };
-  const navBtn = { padding: '6px', cursor: 'pointer', border: '1px solid #ddd', borderRadius: '4px', background: '#fff', display: 'flex', alignItems: 'center' };
+  const handleEdit = (row) => {
+    setEditId(row._id);
+    setFormData({
+      customerName: row.customerName,
+      contactNumber: row.contactNumber,
+      district: row.district,
+      state: row.state
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const filteredDistributors = distributors.filter(item =>
+    item.customerName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.district.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    item.state.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   return (
-    <div style={{ padding: '20px', maxWidth: '60vw', margin: '40px auto', fontFamily: 'system-ui, sans-serif', color: '#333' }}>
-      <h2 style={{ marginBottom: '20px', color: '#1a1a1a' }}>Distributor Management</h2>
-
-      {/* Form Card */}
-      <div style={{ background: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.1)', marginBottom: '30px' }}>
-        <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px' }}>
-          <input style={inputStyle} name="customerName" placeholder="Customer Name" value={formData.customerName} onChange={handleChange} required />
-          <input style={inputStyle} name="contactNumber" placeholder="Contact Number" value={formData.contactNumber} onChange={handleChange} required />
-          <input style={inputStyle} name="district" placeholder="District" value={formData.district} onChange={handleChange} required />
-          <input style={inputStyle} name="state" placeholder="State" value={formData.state} onChange={handleChange} required />
-          <button type="submit" style={{ background: editId ? '#28a745' : '#007bff', color: '#fff', border: 'none', padding: '10px', borderRadius: '4px', cursor: 'pointer', fontWeight: 'bold' }}>
-            {editId ? 'Update Distributor' : 'Add Distributor'}
-          </button>
-        </form>
-      </div>
-
-      {/* Search Bar */}
-      <div style={{ marginBottom: '20px', position: 'relative' }}>
-        <Search size={18} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#888' }} />
-        <input 
-          type="text"
-          placeholder="Filter by State or District..."
-          value={searchTerm}
-          onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-          style={{ ...inputStyle, width: '100%', paddingLeft: '40px', boxSizing: 'border-box', border: '1px solid #007bff' }}
-        />
-        {searchTerm && (
-          <X size={16} onClick={() => setSearchTerm('')} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', cursor: 'pointer', color: '#888' }} />
-        )}
-      </div>
-
-      {/* Scrollable Table Wrapper */}
-      <div style={{ width: '100%', overflowX: 'auto', border: '1px solid #dee2e6', borderRadius: '8px', background: '#fff' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', minWidth: '700px' }}>
-          <thead>
-            <tr>
-              <th style={tableHeaderStyle}>Name</th>
-              <th style={tableHeaderStyle}>Contact</th>
-              <th style={tableHeaderStyle}>District</th>
-              <th style={tableHeaderStyle}>State</th>
-              <th style={tableHeaderStyle}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
-              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '40px' }}>Loading data...</td></tr>
-            ) : currentItems.length > 0 ? (
-              currentItems.map((item) => (
-                <tr key={item._id} style={{ hover: { background: '#f9f9f9' } }}>
-                  <td style={tableCellStyle}>{item.customerName}</td>
-                  <td style={tableCellStyle}>{item.contactNumber}</td>
-                  <td style={tableCellStyle}>{item.district}</td>
-                  <td style={tableCellStyle}>{item.state}</td>
-                  <td style={tableCellStyle}>
-                    <div style={{ display: 'flex', gap: '12px' }}>
-                      <button title="Edit" onClick={() => { setEditId(item._id); setFormData(item); window.scrollTo(0,0); }} style={actionBtn}><Pencil size={18}/></button>
-                      <button title="Delete" onClick={() => handleDelete(item._id)} style={{ ...actionBtn, color: '#dc3545' }}><Trash2 size={18}/></button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr><td colSpan="5" style={{ textAlign: 'center', padding: '40px', color: '#888' }}>No distributors found matching your search.</td></tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Windowed Pagination Controls */}
-      {totalPages > 1 && (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '25px' }}>
-          <button disabled={currentPage === 1} onClick={() => paginate(currentPage - 1)} style={{ ...navBtn, opacity: currentPage === 1 ? 0.5 : 1 }}>
-            <ChevronLeft size={18}/>
-          </button>
-
-          {getPageNumbers().map((number, index) => (
-            <button 
-              key={index} 
-              disabled={number === '...'}
-              onClick={() => paginate(number)}
-              style={{ 
-                padding: '8px 14px',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                cursor: number === '...' ? 'default' : 'pointer',
-                backgroundColor: currentPage === number ? '#007bff' : '#fff',
-                color: currentPage === number ? '#fff' : '#333',
-                fontWeight: currentPage === number ? 'bold' : 'normal',
-                transition: 'all 0.2s'
-              }}
-            >
-              {number}
-            </button>
-          ))}
-
-          <button disabled={currentPage === totalPages} onClick={() => paginate(currentPage + 1)} style={{ ...navBtn, opacity: currentPage === totalPages ? 0.5 : 1 }}>
-            <ChevronRight size={18}/>
-          </button>
+    <div className="modern-page">
+      <div className="page-header">
+        <div>
+          <h2>Distributor Network</h2>
+          <p className="muted">Manage and monitor our regional distribution partners and supply chain contacts.</p>
         </div>
-      )}
-      
-      <div style={{ textAlign: 'center', fontSize: '13px', color: '#666', marginTop: '15px' }}>
-        Showing <strong>{indexOfFirstItem + 1}</strong> - <strong>{Math.min(indexOfLastItem, filteredItems.length)}</strong> of <strong>{filteredItems.length}</strong> records
+        <div className="badge secondary"><Users size={14} /> Network Admin</div>
       </div>
+
+      <div className="content-grid-two-col">
+        {/* FORM SECTION */}
+        <div className="form-column">
+          <section className="card">
+            <div className="form-header">
+              {editId ? <Pencil size={20} /> : <Plus size={20} />}
+              <h3>{editId ? "Update Partner" : "Register Distributor"}</h3>
+            </div>
+
+            <form onSubmit={handleSubmit} className="form-grid">
+              <div className="form-group full">
+                <label>Customer Name</label>
+                <div className="input-with-icon">
+                  <User size={18} />
+                  <input
+                    name="customerName"
+                    placeholder="Full business name"
+                    value={formData.customerName}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group full">
+                <label>Contact Number</label>
+                <div className="input-with-icon">
+                  <Phone size={18} />
+                  <input
+                    name="contactNumber"
+                    placeholder="Mobile or Landline"
+                    value={formData.contactNumber}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group half">
+                <label>District</label>
+                <div className="input-with-icon">
+                  <MapPin size={18} />
+                  <input
+                    name="district"
+                    placeholder="District"
+                    value={formData.district}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-group half">
+                <label>State</label>
+                <div className="input-with-icon">
+                  <Globe size={18} />
+                  <input
+                    name="state"
+                    placeholder="State"
+                    value={formData.state}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div className="form-actions full">
+                {editId && (
+                  <button type="button" className="btn-outline" onClick={() => {
+                    setEditId(null);
+                    setFormData({ customerName: '', contactNumber: '', district: '', state: '' });
+                  }}>Cancel</button>
+                )}
+                <button type="submit" className="btn" disabled={submitting}>
+                  {submitting ? <Loader2 className="animate-spin" size={18} /> : (
+                    editId ? "Update Profile" : "Add to Network"
+                  )}
+                </button>
+              </div>
+            </form>
+            {message && <div className={`form-msg ${message.includes('successfully') ? 'success' : 'error'}`}>{message}</div>}
+          </section>
+        </div>
+
+        {/* LIST SECTION */}
+        <div className="table-column">
+          <section className="card">
+            <div className="table-header-box">
+              <div className="form-header">
+                <Filter size={20} />
+                <h3>Distributor Registry</h3>
+              </div>
+              <div className="search-field">
+                <Search size={16} />
+                <input
+                  placeholder="Search by name, state or district..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {loading ? (
+              <div style={{ padding: "4rem", textAlign: "center" }}>
+                <Loader2 className="animate-spin muted" size={40} />
+                <p className="muted">Loading distributor database...</p>
+              </div>
+            ) : (
+              <DataTable
+                columns={[
+                  {
+                    key: "customerName",
+                    label: "Customer Details",
+                    render: (r) => (
+                      <div>
+                        <div style={{ fontWeight: "600", color: "var(--text-main)" }}>{r.customerName}</div>
+                        <div className="muted" style={{ fontSize: "0.8rem", display: "flex", alignItems: "center", gap: "4px" }}>
+                          <Phone size={12} /> {r.contactNumber}
+                        </div>
+                      </div>
+                    )
+                  },
+                  {
+                    key: "location",
+                    label: "Region",
+                    render: (r) => (
+                      <div className="muted" style={{ fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <MapPin size={14} /> {r.district}, {r.state}
+                      </div>
+                    )
+                  }
+                ]}
+                data={filteredDistributors}
+                actions={(row) => (
+                  <div className="dt-actions">
+                    <button className="btn-outline btn-sm" onClick={() => handleEdit(row)} title="Edit Profile">
+                      <Pencil size={15} />
+                    </button>
+                    <button className="btn-outline btn-sm" style={{ color: "var(--danger)" }} onClick={() => handleDelete(row._id)} title="Delete Record">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                )}
+              />
+            )}
+          </section>
+        </div>
+      </div>
+
+      <style>{`
+        .content-grid-two-col { display: grid; grid-template-columns: 1.2fr 1.8fr; gap: 2.5rem; align-items: start; }
+        .form-column { position: sticky; top: 1.5rem; container-type: inline-size; }
+        .table-header-box { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap; }
+        .search-field { 
+          display: flex; align-items: center; gap: 0.75rem; background: var(--bg-main);
+          padding: 0.5rem 1rem; border-radius: 10px; border: 1px solid var(--border-light);
+          flex: 1; min-width: 250px;
+        }
+        .search-field input { border: none; background: transparent; outline: none; width: 100%; font-size: 0.85rem; color: var(--text-primary); }
+        
+        @media (max-width: 1400px) {
+          .content-grid-two-col { grid-template-columns: 1fr; }
+          .form-column { position: static; }
+        }
+      `}</style>
     </div>
   );
 };

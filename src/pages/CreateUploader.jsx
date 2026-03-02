@@ -29,22 +29,41 @@ const CreateUploader = () => {
   };
 
   return (
-    <div className="form-card">
-      <h3>Create Uploader (admin only)</h3>
-      {msg && <div className="form-msg">{msg}</div>}
-      <form onSubmit={submit} className="form-grid">
-        <label>
-          Uploader Email
-          <input className="form-input" placeholder="uploader email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        </label>
+    <div className="form-card" style={{ maxWidth: '500px' }}>
+      <div className="form-header">
+        <h3>Create Uploader</h3>
+        <p className="muted">System administrators only. Internal access accounts.</p>
+      </div>
 
-        <label>
-          Password
-          <input className="form-input" placeholder="password" value={password} onChange={(e) => setPassword(e.target.value)} />
-        </label>
+      {msg && <div className={`form-msg ${msg.includes('created') ? 'success' : 'error'}`}>{msg}</div>}
 
-        <div>
-          <button className="btn" type="submit">Create</button>
+      <form onSubmit={submit}>
+        <div className="form-group">
+          <label>Uploader Email</label>
+          <input
+            type="email"
+            className="form-input"
+            placeholder="e.g. uploader@shyammetalics.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Initial Password</label>
+          <input
+            type="password"
+            className="form-input"
+            placeholder="••••••••"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+        </div>
+
+        <div className="form-actions">
+          <button className="btn-primary" type="submit" style={{ width: '100%' }}>Create Account</button>
         </div>
       </form>
     </div>

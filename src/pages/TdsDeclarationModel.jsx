@@ -1,54 +1,59 @@
 import React, { useEffect, useState } from "react";
 import DataTable from "../components/DataTable";
-import "../App.css";
-import "../components/css/Form.css";
+import {
+  ShieldCheck, Calendar, FileText, UploadCloud,
+  Plus, Edit3, Trash2, Loader2, Info, ArrowRight, X
+} from "lucide-react";
 import { authHeader } from "../auth";
+import "../components/css/Form.css";
 
 export default function TdsDeclarationModel() {
   const [tdsName, setTdsName] = useState("");
   const [tdsDate, setTdsDate] = useState("");
   const [file, setFile] = useState(null);
   const [message, setMessage] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [list, setList] = useState([]);
   const [editId, setEditId] = useState(null);
   const [editName, setEditName] = useState("");
   const [editDate, setEditDate] = useState("");
   const [editFile, setEditFile] = useState(null);
-  const [uplaoding, setUploading] = useState(false);
-  const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/tds`; 
+
+  const API_BASE = `${import.meta.env.VITE_API_BASE || "http://localhost:3002"}/tds`;
 
   useEffect(() => {
     fetchList();
   }, []);
 
   const fetchList = async () => {
+    setLoading(true);
     try {
       const res = await fetch(`${API_BASE}/get_tds`);
-      if (!res.ok) throw new Error("Failed to fetch");
+      if (!res.ok) throw new Error("Failed to fetch TDS records");
       const json = await res.json();
       setList(json.data || []);
     } catch (err) {
       console.error(err);
+      setList([]);
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setMessage("");
+    if (!tdsName || !tdsDate || !file) return setMessage("Please provide document title, date and file.");
 
-    if (!tdsName || !tdsDate || !file) {
-      setMessage("Please provide name, date and a file.");
-      return;
-    }
-
+    setUploading(true);
     try {
       const formData = new FormData();
       formData.append("tds_name", tdsName);
       formData.append("tds_date", tdsDate);
-      // append the file under the same field name the backend expects
       formData.append("tds_file", file);
-      // also include a simple text field so controllers that validate req.body.tds_file succeed
-      formData.append("tds_file", file.name);
+      // Backend may expect the filename variant too as per previous code
+      formData.append("tds_file_name", file.name);
 
       const res = await fetch(`${API_BASE}/create_tds`, {
         method: "POST",
@@ -56,49 +61,46 @@ export default function TdsDeclarationModel() {
       });
 
       const result = await res.json();
-      if (!res.ok) {
-        setMessage(result.message || "Upload failed");
-        return;
-      }
+      if (!res.ok) throw new Error(result.message || "Upload failed");
 
-      setMessage(result.message || "TDS uploaded");
+      setMessage("TDS declaration published successfully");
       setTdsName("");
       setTdsDate("");
       setFile(null);
       fetchList();
     } catch (err) {
-      console.error(err);
-      setMessage("Server error");
+      setMessage("Error: " + err.message);
+    } finally {
+      setUploading(false);
     }
   };
 
   const handleDelete = async (id) => {
+    if (!window.confirm("Delete this TDS declaration permanently?")) return;
     try {
       const res = await fetch(`${API_BASE}/delete`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json", ...authHeader() },
         body: JSON.stringify({ id }),
       });
-      const json = await res.json();
-      if (!res.ok) return alert(json.message || "Delete failed");
+      if (!res.ok) throw new Error("Delete failed");
       fetchList();
     } catch (e) {
-      alert("Network error");
+      alert("Network error: " + e.message);
     }
   };
 
   const handleEdit = (row) => {
     setEditId(row._id);
     setEditName(row.tds_name);
-    setEditDate(row.tds_date);
+    setEditDate(row.tds_date || "");
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleUpdateSubmit = async (e) => {
     e.preventDefault();
-    if (!editName || !editDate) {
-      alert("Please fill all fields");
-      return;
-    }
+    if (!editName || !editDate) return alert("Please fill all required fields");
+
     setUploading(true);
     try {
       const formData = new FormData();
@@ -106,106 +108,179 @@ export default function TdsDeclarationModel() {
       formData.append("tds_date", editDate);
       if (editFile) formData.append("tds_file", editFile);
 
-      const headers = {};
-      const token = localStorage.getItem("shyam_token");
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
-      }
-
       const res = await fetch(`${API_BASE}/update_tds/${editId}`, {
         method: "PUT",
-        headers: headers,
+        headers: { ...authHeader() },
         body: formData,
       });
-      const json = await res.json();
-      if (!res.ok) return alert(json.message || "Update failed");
+
+      if (!res.ok) throw new Error("Update failed");
       setEditId(null);
+      setEditFile(null);
       fetchList();
+      alert("TDS declaration updated successfully");
     } catch (e) {
-      console.error(e);
-      alert("Network error: " + e.message);
+      alert("Error: " + e.message);
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="container" style={{ padding: 16 }}>
-      <h2>TDS Declaration</h2>
-
-      <div className="form-card">
-        <form onSubmit={handleSubmit} className="form-grid">
-          <label>
-            Name
-            <input className="form-input" value={tdsName} onChange={(e) => setTdsName(e.target.value)} />
-          </label>
-
-          <label>
-            Date
-            <input className="form-input" type="date" value={tdsDate} onChange={(e) => setTdsDate(e.target.value)} />
-          </label>
-
-          <label>
-            File
-            <input
-              className="form-input"
-              type="file"
-              onChange={(e) => setFile(e.target.files && e.target.files[0])}
-              accept="*/*"
-            />
-          </label>
-
-          <div>
-            <button type="submit" className="btn">Upload TDS</button>
-          </div>
-          {message && <div className={`form-msg ${message.toLowerCase().includes('failed') || message.toLowerCase().includes('please') ? 'error' : ''}`}>{message}</div>}
-        </form>
+    <div className="modern-page">
+      <div className="page-header">
+        <div>
+          <h2>TDS Declarations</h2>
+          <p className="muted">Manage tax deduction certificates, statutory declarations, and financial compliance documents.</p>
+        </div>
+        <div className="badge primary-subtle"><ShieldCheck size={14} /> Taxation Compliance</div>
       </div>
 
-      <section style={{ marginTop: 24 }}>
-        <h3>Uploaded TDS</h3>
-        <div className="card">
-          <DataTable
-            columns={[
-              { key: "tds_name", label: "Name" },
-              { key: "tds_date", label: "Date" },
-              { key: "tds_file", label: "File", render: (r) => (r.tds_file ? <a href={r.tds_file} target="_blank" rel="noreferrer">View</a> : "-") }
-            ]}
-            data={list}
-            actions={(row) => (
-                <>
-                  <a className="btn-sm" href={row.tds_file || '#'} target="_blank" rel="noreferrer">Open</a>
-                  <button style={{ marginLeft: 4, marginRight: 4 }} className="btn-sm" onClick={() => handleEdit(row)}>Edit</button>
-                  <button style={{ marginLeft: 4 }} className="btn-sm" onClick={() => handleDelete(row._id)}>Delete</button>
-                </>
-              )}
-          />
-        </div>
-      </section>
-
-      {editId && (
-        <div style={{ marginTop: 24, padding: 16, border: "1px solid #ddd", borderRadius: 8 }}>
-          <h3>Edit TDS</h3>
-          <form onSubmit={handleUpdateSubmit} style={{ display: "grid", gap: 8, maxWidth: 640 }}>
-            <label>
-              Name
-              <input className="form-input" value={editName} onChange={(e) => setEditName(e.target.value)} />
-            </label>
-            <label>
-              Date
-              <input className="form-input" type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} />
-            </label>
-            <label>
-              File (optional)
-              <input className="form-input" type="file" onChange={(e) => setEditFile(e.target.files && e.target.files[0])} />
-            </label>
-            <div style={{ display: "flex", gap: 8 }}>
-              <button type="submit" className="btn">Update</button>
-              <button type="button" className="btn" style={{background: '#999'}} onClick={() => setEditId(null)}>Cancel</button>
+      <div className="content-grid-two-col">
+        {/* FORM SECTION */}
+        <div className="form-column">
+          <section className="card">
+            <div className="form-header">
+              {editId ? <Edit3 size={20} /> : <Plus size={20} />}
+              <h3>{editId ? "Edit Declaration" : "New TDS Upload"}</h3>
             </div>
-          </form>
+
+            {editId ? (
+              <form onSubmit={handleUpdateSubmit} className="form-grid">
+                <div className="form-group full">
+                  <label>Certificate / Document Title</label>
+                  <input value={editName} onChange={(e) => setEditName(e.target.value)} required />
+                </div>
+                <div className="form-group half">
+                  <label>Issuance Date</label>
+                  <input type="date" value={editDate} onChange={(e) => setEditDate(e.target.value)} required />
+                </div>
+                <div className="form-group half">
+                  <label>Update Document (Optional)</label>
+                  <input type="file" onChange={(e) => setEditFile(e.target.files && e.target.files[0])} />
+                </div>
+                <div className="form-actions full">
+                  <button type="button" className="btn-outline" onClick={() => setEditId(null)}>Cancel</button>
+                  <button type="submit" className="btn" disabled={uploading}>
+                    {uploading ? <Loader2 className="animate-spin" size={18} /> : "Save Changes"}
+                  </button>
+                </div>
+              </form>
+            ) : (
+              <form onSubmit={handleSubmit} className="form-grid">
+                <div className="form-group full">
+                  <label>Document Title</label>
+                  <div className="input-with-icon">
+                    <FileText size={18} />
+                    <input
+                      placeholder="e.g. Form 15G/15H - FY 2024-25"
+                      value={tdsName}
+                      onChange={(e) => setTdsName(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+                <div className="form-group half">
+                  <label>Declaration Date</label>
+                  <input
+                    type="date"
+                    value={tdsDate}
+                    onChange={(e) => setTdsDate(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="form-group half">
+                  <label>PDF Certificate</label>
+                  <input type="file" onChange={(e) => setFile(e.target.files && e.target.files[0])} required />
+                </div>
+                <button type="submit" className="btn full" disabled={uploading}>
+                  {uploading ? <Loader2 className="animate-spin" size={20} /> : <><UploadCloud size={18} /> Publish TDS Record</>}
+                </button>
+              </form>
+            )}
+            {message && <div className={`form-msg ${message.includes('successfully') ? 'success' : 'error'}`}>{message}</div>}
+          </section>
         </div>
-      )}
+
+        {/* LIST SECTION */}
+        <div className="table-column">
+          <section className="card">
+            <div className="form-header">
+              <ShieldCheck size={20} />
+              <h3>Declaration History</h3>
+            </div>
+
+            {loading ? (
+              <div style={{ padding: "4rem", textAlign: "center" }}>
+                <Loader2 className="animate-spin muted" size={40} />
+                <p className="muted">Retrieving tax records...</p>
+              </div>
+            ) : (
+              <DataTable
+                columns={[
+                  {
+                    key: "tds_name",
+                    label: "Title",
+                    render: (r) => (
+                      <div style={{ fontWeight: "600", color: "var(--text-main)" }}>
+                        {r.tds_name}
+                      </div>
+                    )
+                  },
+                  {
+                    key: "tds_date",
+                    label: "Date",
+                    width: "140px",
+                    render: (r) => (
+                      <div className="muted" style={{ fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <Calendar size={14} /> {r.tds_date}
+                      </div>
+                    )
+                  },
+                  {
+                    key: "tds_file",
+                    label: "Certificate",
+                    width: "120px",
+                    render: (r) => (
+                      r.tds_file ? (
+                        <a href={r.tds_file} target="_blank" rel="noreferrer" className="badge primary-subtle link-badge">
+                          <FileText size={12} /> View PDF
+                        </a>
+                      ) : <span className="muted">—</span>
+                    )
+                  }
+                ]}
+                data={list}
+                actions={(row) => (
+                  <div className="dt-actions">
+                    <button className="btn-outline btn-sm" onClick={() => handleEdit(row)} title="Edit">
+                      <Edit3 size={15} />
+                    </button>
+                    <button className="btn-outline btn-sm" style={{ color: "var(--danger)" }} onClick={() => handleDelete(row._id)} title="Delete">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                )}
+              />
+            )}
+          </section>
+        </div>
+      </div>
+
+      <style>{`
+        .content-grid-two-col { display: grid; grid-template-columns: 1fr 1.6fr; gap: 2rem; align-items: start; }
+        .form-column { position: sticky; top: 1.5rem; }
+        .link-badge { 
+          text-decoration: none; display: flex; align-items: center; gap: 4px; 
+          font-weight: 600; font-size: 11px; transition: all 0.2s;
+        }
+        .link-badge:hover { opacity: 0.8; transform: translateY(-1px); }
+        
+        @media (max-width: 1200px) {
+          .content-grid-two-col { grid-template-columns: 1fr; }
+          .form-column { position: static; }
+        }
+      `}</style>
     </div>
   );
 }

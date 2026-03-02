@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Trash2, Edit, X } from "lucide-react";
+import { Trash2, Eye, X, Mail, Phone, Globe, MessageSquare, Loader2, AlertCircle } from "lucide-react";
+import DataTable from "../components/DataTable";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "https://shyam-metalics-backend-kzr8.onrender.com";
 const API_URL = `${API_BASE}/inquiries`;
@@ -11,11 +12,9 @@ export default function ContactFormInquiries() {
   const [selectedInquiry, setSelectedInquiry] = useState(null);
   const [statusUpdating, setStatusUpdating] = useState(false);
 
-  // Fetch all inquiries
   const fetchInquiries = async () => {
     try {
       const res = await axios.get(API_URL);
-      // Ensure we have an array
       const data = Array.isArray(res.data) ? res.data : res.data?.data || [];
       setInquiries(data);
     } catch (err) {
@@ -30,7 +29,6 @@ export default function ContactFormInquiries() {
     fetchInquiries();
   }, []);
 
-  // Delete inquiry
   const handleDelete = async (id) => {
     if (!window.confirm("Are you sure you want to delete this inquiry?")) return;
     try {
@@ -41,7 +39,6 @@ export default function ContactFormInquiries() {
     }
   };
 
-  // Update status
   const handleStatusChange = async (id, status) => {
     setStatusUpdating(true);
     try {
@@ -56,94 +53,160 @@ export default function ContactFormInquiries() {
     }
   };
 
+  const getStatusBadgeClass = (status) => {
+    switch (status) {
+      case "Resolved": return "badge-success";
+      case "Rejected": return "badge-danger";
+      case "In Progress": return "badge-warning";
+      default: return "badge-info";
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 p-6">
-      <h1 className="text-3xl font-bold mb-6 text-center text-gray-800 dark:text-gray-100">
-        Admin Panel - Inquiries
-      </h1>
-
-      {loading ? (
-        <p className="text-center text-gray-600 dark:text-gray-300">Loading...</p>
-      ) : !Array.isArray(inquiries) || inquiries.length === 0 ? (
-        <p className="text-center text-gray-600 dark:text-gray-300">No inquiries found.</p>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden">
-            <thead className="bg-gray-200 dark:bg-gray-700">
-              <tr>
-                <th className="px-4 py-2 text-left">Name</th>
-                <th className="px-4 py-2 text-left">Email</th>
-                <th className="px-4 py-2 text-left">Company</th>
-                <th className="px-4 py-2 text-left">Status</th>
-                <th className="px-4 py-2 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {inquiries.map((inq) => (
-                <tr
-                  key={inq._id}
-                  className="border-b dark:border-gray-700 hover:bg-gray-100 dark:hover:bg-gray-700 transition"
-                >
-                  <td className="px-4 py-2">{inq.fullName || "-"}</td>
-                  <td className="px-4 py-2">{inq.email || "-"}</td>
-                  <td className="px-4 py-2">{inq.companyName || "-"}</td>
-                  <td className="px-4 py-2">
-                    <select
-                      value={inq.status || "Pending"}
-                      onChange={(e) => handleStatusChange(inq._id, e.target.value)}
-                      disabled={statusUpdating}
-                      className="border rounded px-2 py-1 dark:bg-gray-700 dark:text-gray-100"
-                    >
-                      {["Pending", "In Progress", "Resolved", "Rejected"].map((s) => (
-                        <option key={s} value={s}>
-                          {s}
-                        </option>
-                      ))}
-                    </select>
-                  </td>
-                  <td className="px-4 py-2 flex gap-2">
-                    <button
-                      onClick={() => setSelectedInquiry(inq)}
-                      className="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600 flex items-center gap-1"
-                    >
-                      <Edit className="w-4 h-4" /> View
-                    </button>
-                    <button
-                      onClick={() => handleDelete(inq._id)}
-                      className="bg-red-500 text-white px-2 py-1 rounded hover:bg-red-600 flex items-center gap-1"
-                    >
-                      <Trash2 className="w-4 h-4" /> Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <div>
+      <div className="page-header">
+        <div>
+          <h2>Contact Inquiries</h2>
+          <p className="muted">Review and manage messages from your website visitors.</p>
         </div>
-      )}
+      </div>
 
-      {/* Inquiry Details Modal */}
+      <div className="card" style={{ padding: "1.5rem" }}>
+        {loading ? (
+          <div style={{ padding: "4rem", textAlign: "center", color: "var(--text-muted)" }}>
+            <Loader2 size={32} className="animate-spin" style={{ margin: "0 auto 1rem" }} />
+            <p>Loading inquiries...</p>
+          </div>
+        ) : (
+          <DataTable
+            columns={[
+              { key: "fullName", label: "Full Name" },
+              { key: "email", label: "Email" },
+              { key: "phone", label: "Phone" },
+              { key: "companyName", label: "Company" },
+              {
+                key: "status",
+                label: "Status",
+                width: "150px",
+                render: (r) => (
+                  <select
+                    value={r.status || "Pending"}
+                    onChange={(e) => handleStatusChange(r._id, e.target.value)}
+                    disabled={statusUpdating}
+                    className="form-input"
+                    style={{ padding: "4px 8px", fontSize: "0.85rem" }}
+                  >
+                    {["Pending", "In Progress", "Resolved", "Rejected"].map((s) => (
+                      <option key={s} value={s}>{s}</option>
+                    ))}
+                  </select>
+                )
+              },
+            ]}
+            data={inquiries}
+            actions={(row) => (
+              <div className="dt-actions">
+                <button
+                  className="btn-outline btn-sm"
+                  onClick={() => setSelectedInquiry(row)}
+                  title="View Details"
+                >
+                  <Eye size={16} />
+                </button>
+                <button
+                  className="btn-outline btn-sm"
+                  style={{ color: "var(--danger)" }}
+                  onClick={() => handleDelete(row._id)}
+                  title="Delete"
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            )}
+          />
+        )}
+      </div>
+
       {selectedInquiry && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6 max-w-lg w-full relative">
-            <button
-              onClick={() => setSelectedInquiry(null)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-800 dark:hover:text-gray-100"
-            >
-              <X />
-            </button>
-            <h2 className="text-xl font-bold mb-4">{selectedInquiry.fullName || "-"}</h2>
-            <p><strong>Email:</strong> {selectedInquiry.email || "-"}</p>
-            <p><strong>Company:</strong> {selectedInquiry.companyName || "-"}</p>
-            <p><strong>Classification:</strong> {selectedInquiry.classification || "-"}</p>
-            <p><strong>Industry:</strong> {selectedInquiry.industry || "-"}</p>
-            <p><strong>Country:</strong> {selectedInquiry.country || "-"}</p>
-            <p><strong>Phone:</strong> {selectedInquiry.phone || "-"}</p>
-            <p className="mt-2"><strong>Inquiry Message:</strong> {selectedInquiry.inquiryMessage || "-"}</p>
-            <p className="mt-2"><strong>Status:</strong> {selectedInquiry.status || "Pending"}</p>
+        <div className="modal-overlay">
+          <div className="form-card" style={{ maxWidth: "600px", position: "relative" }}>
+            <div className="form-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h3>Inquiry Details</h3>
+                <p>Received on {new Date(selectedInquiry.createdAt).toLocaleDateString()}</p>
+              </div>
+              <button className="btn-outline btn-sm" onClick={() => setSelectedInquiry(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <div style={{ display: "grid", gap: "1.5rem", padding: "1rem 0" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div>
+                  <label className="muted" style={{ display: "block", fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.25rem" }}>FULL NAME</label>
+                  <p style={{ fontWeight: "500" }}>{selectedInquiry.fullName || "-"}</p>
+                </div>
+                <div>
+                  <label className="muted" style={{ display: "block", fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.25rem" }}>COMPANY</label>
+                  <p style={{ fontWeight: "500" }}>{selectedInquiry.companyName || "-"}</p>
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <Mail size={16} className="muted" />
+                  <a href={`mailto:${selectedInquiry.email}`} className="link">{selectedInquiry.email || "-"}</a>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  <Phone size={16} className="muted" />
+                  <span>{selectedInquiry.phone || "-"}</span>
+                </div>
+              </div>
+
+              <div style={{ background: "var(--bg-secondary)", padding: "1rem", borderRadius: "var(--radius-sm)" }}>
+                <label className="muted" style={{ display: "flex", alignItems: "center", gap: "0.4rem", fontSize: "0.75rem", fontWeight: "600", marginBottom: "0.5rem" }}>
+                  <MessageSquare size={14} /> MESSAGE
+                </label>
+                <p style={{ fontSize: "0.9rem", lineHeight: "1.5", color: "var(--text-main)" }}>
+                  {selectedInquiry.inquiryMessage || "No message provided."}
+                </p>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", fontSize: "0.85rem" }}>
+                <div>
+                  <span className="muted">Industry:</span> {selectedInquiry.industry || "-"}
+                </div>
+                <div>
+                  <span className="muted">Classification:</span> {selectedInquiry.classification || "-"}
+                </div>
+                <div>
+                  <span className="muted">Country:</span> {selectedInquiry.country || "-"}
+                </div>
+                <div>
+                  <span className="muted">Current Status:</span>
+                  <span style={{ marginLeft: "0.5rem", fontWeight: "600" }}>{selectedInquiry.status || "Pending"}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="form-actions">
+              <button className="btn-primary" onClick={() => setSelectedInquiry(null)}>Close</button>
+            </div>
           </div>
         </div>
       )}
+
+      <style>{`
+        .modal-overlay {
+          position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center;
+          z-index: 1000; padding: 1.5rem;
+        }
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .link { color: var(--primary); text-decoration: none; }
+        .link:hover { text-decoration: underline; }
+      `}</style>
     </div>
   );
 }

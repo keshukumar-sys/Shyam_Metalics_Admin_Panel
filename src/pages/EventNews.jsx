@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import DataTable from "../components/DataTable";
+import { Edit, Trash2, Plus, Loader2, Eye, X, Image as ImageIcon, Type, Layout, Calendar, Globe, FileText } from "lucide-react";
+import "../components/css/Form.css";
 
 export default function EventNewsAdmin() {
   const [slug, setSlug] = useState("");
@@ -55,14 +57,13 @@ export default function EventNewsAdmin() {
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    setUploading(true);
-    setMessage("");
-
     if (!slug || !category || !date || !title || !description || !image) {
       setMessage("All fields including image are required.");
-      setUploading(false);
       return;
     }
+
+    setUploading(true);
+    setMessage("");
 
     const formData = new FormData();
     formData.append("slug", slug);
@@ -97,12 +98,11 @@ export default function EventNewsAdmin() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this news item?")) return;
+    if (!window.confirm("Are you sure you want to delete this news item?")) return;
     try {
       const res = await fetch(`${API_BASE}/delete/${id}`, { method: "DELETE" });
-      const result = await res.json();
       if (res.ok) fetchNews();
-      else alert(result.message || "Delete failed");
+      else alert("Delete failed");
     } catch (err) {
       alert("Server error");
     }
@@ -136,11 +136,10 @@ export default function EventNewsAdmin() {
 
     try {
       const res = await fetch(`${API_BASE}/update_event_news/${editId}`, { method: "PUT", body: formData });
-      const result = await res.json();
       if (res.ok) {
         resetForm();
         fetchNews();
-      } else alert(result.message || "Update failed");
+      } else alert("Update failed");
     } catch (err) {
       alert("Server error");
     } finally {
@@ -149,88 +148,281 @@ export default function EventNewsAdmin() {
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Event News Management</h2>
-
-      {/* Edit Form */}
-      {editId && (
-        <div className="mb-6 p-6 border border-gray-300 rounded bg-gray-50 shadow">
-          <h3 className="text-xl font-semibold mb-4">Edit Event News</h3>
-          <form onSubmit={handleUpdate} className="grid gap-4 max-w-xl">
-            <input className="border p-2 rounded mt-1" value={editFields.slug} onChange={e=>setEditFields({...editFields, slug:e.target.value})} placeholder="Slug" required/>
-            <input className="border p-2 rounded mt-1" value={editFields.category} onChange={e=>setEditFields({...editFields, category:e.target.value})} placeholder="Category" required/>
-            <input type="date" className="border p-2 rounded mt-1" value={editFields.date} onChange={e=>setEditFields({...editFields, date:e.target.value})} placeholder="Date" required/>
-            <input className="border p-2 rounded mt-1" value={editFields.title} onChange={e=>setEditFields({...editFields, title:e.target.value})} placeholder="Title" required/>
-            <textarea className="border p-2 rounded mt-1 h-24 resize-none" value={editFields.description} onChange={e=>setEditFields({...editFields, description:e.target.value})} placeholder="Description" required/>
-
-            <h4 className="font-semibold">Content Blocks</h4>
-            {editFields.contentBlocks?.map((block, idx)=>(
-              <div key={idx} className="flex gap-2 items-center">
-                <textarea className="border p-2 rounded h-16 flex-1" value={block.text} onChange={e=>{
-                  const newBlocks = [...editFields.contentBlocks];
-                  newBlocks[idx].text = e.target.value;
-                  setEditFields({...editFields, contentBlocks: newBlocks});
-                }} required/>
-                <button type="button" className="bg-red-500 text-white px-2 py-1 rounded" onClick={()=> {
-                  const newBlocks = editFields.contentBlocks.filter((_, i)=>i!==idx);
-                  setEditFields({...editFields, contentBlocks:newBlocks});
-                }}>Remove</button>
-              </div>
-            ))}
-            <button type="button" className="bg-green-500 text-white px-2 py-1 rounded" onClick={()=>setEditFields({...editFields, contentBlocks:[...editFields.contentBlocks,{type:"paragraph",text:""}]})}>Add Content Block</button>
-
-            <input type="file" accept=".webp" className="mt-1" onChange={e=>handleImageSelect(e,true)} />
-            <div className="flex gap-3">
-              <button type="submit" disabled={uploading} className="bg-blue-600 px-4 py-2 rounded text-white hover:bg-blue-700">{uploading?"Updating...":"Update"}</button>
-              <button type="button" onClick={resetForm} className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">Cancel</button>
-            </div>
-          </form>
+    <div>
+      <div className="page-header">
+        <div>
+          <h2>Event News Management</h2>
+          <p className="muted">Create and manage news articles for corporate events and announcements.</p>
         </div>
-      )}
+      </div>
 
-      {/* Create Form */}
-      <div className="mb-6 p-6 border border-gray-300 rounded bg-white shadow">
-        <h3 className="text-xl font-semibold mb-4">Add New Event News</h3>
-        <form onSubmit={handleCreate} className="grid gap-4 max-w-xl">
-          <input className="border p-2 rounded mt-1" value={slug} onChange={e=>setSlug(e.target.value)} placeholder="Slug" required/>
-          <input className="border p-2 rounded mt-1" value={category} onChange={e=>setCategory(e.target.value)} placeholder="Category" required/>
-          <input type="date" className="border p-2 rounded mt-1" value={date} onChange={e=>setDate(e.target.value)} placeholder="Date" required/>
-          <input className="border p-2 rounded mt-1" value={title} onChange={e=>setTitle(e.target.value)} placeholder="Title" required/>
-          <textarea className="border p-2 rounded mt-1 h-24 resize-none" value={description} onChange={e=>setDescription(e.target.value)} placeholder="Description" required/>
+      <div className="form-card">
+        <div className="form-header">
+          <h3>Create News Article</h3>
+          <p>Fill in the article details, add content blocks, and upload a cover image.</p>
+        </div>
 
-          <h4 className="font-semibold">Content Blocks</h4>
-          {contentBlocks.map((block, idx)=>(
-            <div key={idx} className="flex gap-2 items-center">
-              <textarea className="border p-2 rounded h-16 flex-1" value={block.text} onChange={e=>updateContentBlock(idx,e.target.value)} required/>
-              <button type="button" className="bg-red-500 text-white px-2 py-1 rounded" onClick={()=>removeContentBlock(idx)}>Remove</button>
+        <form onSubmit={handleCreate}>
+          <div className="form-grid">
+            <div className="form-group full-width">
+              <label>Article Title</label>
+              <input
+                placeholder="e.g. Shyam Metalics Expands Operations in West Bengal"
+                value={title}
+                onChange={e => setTitle(e.target.value)}
+                required
+              />
             </div>
-          ))}
-          <button type="button" className="bg-green-500 text-white px-2 py-1 rounded" onClick={addContentBlock}>Add Content Block</button>
 
-          <input type="file" accept=".webp" className="mt-1" onChange={handleImageSelect} required/>
-          <button type="submit" disabled={uploading} className="bg-green-600 px-4 py-2 rounded text-white hover:bg-green-700">{uploading?"Uploading...":"Add Event News"}</button>
-          {message && <p className={`mt-2 ${message.includes("successfully")?"text-green-600":"text-red-600"}`}>{message}</p>}
+            <div className="form-group">
+              <label>URL Slug</label>
+              <input
+                placeholder="news-article-slug"
+                value={slug}
+                onChange={e => setSlug(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Category</label>
+              <input
+                placeholder="e.g. Corporate, Financial"
+                value={category}
+                onChange={e => setCategory(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Publish Date</label>
+              <input
+                type="date"
+                value={date}
+                onChange={e => setDate(e.target.value)}
+                required
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Cover Image (.webp only)</label>
+              <input
+                type="file"
+                accept=".webp"
+                className="form-input"
+                onChange={handleImageSelect}
+                required
+              />
+            </div>
+
+            <div className="form-group full-width">
+              <label>Short Description</label>
+              <textarea
+                className="form-input h-24"
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                placeholder="Enter a brief summary of the article..."
+                required
+              />
+            </div>
+          </div>
+
+          <div style={{ marginTop: "2rem" }}>
+            <div className="form-header" style={{ padding: 0, border: "none", marginBottom: "1rem" }}>
+              <h4 style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <Type size={18} /> Article Content Blocks
+              </h4>
+              <p className="muted">Add structured paragraphs to your news article.</p>
+            </div>
+
+            <div style={{ display: "grid", gap: "1rem" }}>
+              {contentBlocks.map((block, idx) => (
+                <div key={idx} className="card" style={{ padding: "1rem", background: "var(--bg-secondary)", position: "relative" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                    <span className="muted" style={{ fontSize: "0.75rem", fontWeight: "600" }}>BLOCK #{idx + 1}</span>
+                    {contentBlocks.length > 1 && (
+                      <button type="button" className="btn-outline btn-sm text-danger" onClick={() => removeContentBlock(idx)}>
+                        <Trash2 size={14} /> Remove
+                      </button>
+                    )}
+                  </div>
+                  <textarea
+                    className="form-input"
+                    style={{ minHeight: "100px" }}
+                    value={block.text}
+                    onChange={e => updateContentBlock(idx, e.target.value)}
+                    placeholder="Type paragraph content here..."
+                    required
+                  />
+                </div>
+              ))}
+            </div>
+
+            <button type="button" className="btn-outline" style={{ marginTop: "1rem", width: "100%" }} onClick={addContentBlock}>
+              <Plus size={18} /> Add Another Paragraph
+            </button>
+          </div>
+
+          {message && (
+            <div className={`form-msg ${message.includes("successfully") ? "success" : "error"}`}>
+              {message}
+            </div>
+          )}
+
+          <div className="form-actions">
+            <button type="submit" className="btn-primary" disabled={uploading}>
+              {uploading ? <><Loader2 className="animate-spin" size={18} /> Uploading...</> : <><Plus size={18} /> Create Article</>}
+            </button>
+          </div>
         </form>
       </div>
 
-      {/* Table */}
-      <h3 className="text-xl font-semibold mb-4">All Event News</h3>
-      <DataTable
-        columns={[
-          { key:"title", label:"Title" },
-          { key:"category", label:"Category" },
-          { key:"date", label:"Date" },
-          { key:"description", label:"Description", render:(r)=>r.description?.substring(0,50)+"..." },
-          { key:"image", label:"Image", render:(r)=>r.image ? <a href={r.image} target="_blank" className="text-blue-600 underline">View</a> : "-" }
-        ]}
-        data={newsList}
-        actions={(row)=>(
-          <div className="flex gap-2">
-            <button className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700" onClick={()=>handleEdit(row)}>Edit</button>
-            <button className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700" onClick={()=>handleDelete(row._id)}>Delete</button>
+      <section className="card" style={{ marginTop: "2rem", padding: "1.5rem" }}>
+        <div className="form-header" style={{ border: "none", marginBottom: "1rem" }}>
+          <h3>Published News</h3>
+          <p>Manage existing news items on your website.</p>
+        </div>
+
+        <DataTable
+          columns={[
+            {
+              key: "title",
+              label: "Article Info",
+              render: (r) => (
+                <div>
+                  <div style={{ fontWeight: "600", color: "var(--text-main)" }}>{r.title}</div>
+                  <div className="muted" style={{ fontSize: "0.75rem", display: "flex", gap: "0.8rem", marginTop: "0.2rem" }}>
+                    <span style={{ display: "flex", alignItems: "center", gap: "0.2rem" }}><Calendar size={12} /> {new Date(r.date).toLocaleDateString()}</span>
+                    <span style={{ display: "flex", alignItems: "center", gap: "0.2rem" }}><Layout size={12} /> {r.category}</span>
+                  </div>
+                </div>
+              )
+            },
+            {
+              key: "description",
+              label: "Excerpt",
+              render: (r) => (
+                <div className="muted" style={{ fontSize: "0.85rem", maxWidth: "300px" }}>
+                  {r.description?.substring(0, 80)}...
+                </div>
+              )
+            },
+            {
+              key: "image",
+              label: "Cover",
+              width: "100px",
+              render: (r) => r.image ? (
+                <a href={r.image} target="_blank" rel="noreferrer" className="btn-outline btn-sm" title="View Full Image">
+                  <ImageIcon size={16} />
+                </a>
+              ) : "-"
+            }
+          ]}
+          data={newsList}
+          actions={(row) => (
+            <div className="dt-actions">
+              <button className="btn-outline btn-sm" style={{ color: "var(--primary)" }} onClick={() => handleEdit(row)} title="Edit">
+                <Edit size={16} />
+              </button>
+              <button className="btn-outline btn-sm" style={{ color: "var(--danger)" }} onClick={() => handleDelete(row._id)} title="Delete">
+                <Trash2 size={16} />
+              </button>
+            </div>
+          )}
+        />
+      </section>
+
+      {editId && (
+        <div className="modal-overlay">
+          <div className="form-card" style={{ maxWidth: "800px", maxHeight: "90vh", overflowY: "auto" }}>
+            <div className="form-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h3>Edit News Article</h3>
+                <p>Modifying: {editFields.title}</p>
+              </div>
+              <button className="btn-outline btn-sm" onClick={resetForm}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdate}>
+              <div className="form-grid">
+                <div className="form-group full-width">
+                  <label>Title</label>
+                  <input value={editFields.title} onChange={e => setEditFields({ ...editFields, title: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label>Slug</label>
+                  <input value={editFields.slug} onChange={e => setEditFields({ ...editFields, slug: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label>Category</label>
+                  <input value={editFields.category} onChange={e => setEditFields({ ...editFields, category: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label>Date</label>
+                  <input type="date" value={editFields.date} onChange={e => setEditFields({ ...editFields, date: e.target.value })} required />
+                </div>
+                <div className="form-group">
+                  <label>Cover Image (Optional)</label>
+                  <input type="file" accept=".webp" className="form-input" onChange={e => handleImageSelect(e, true)} />
+                </div>
+                <div className="form-group full-width">
+                  <label>Description</label>
+                  <textarea className="form-input h-24" value={editFields.description} onChange={e => setEditFields({ ...editFields, description: e.target.value })} required />
+                </div>
+              </div>
+
+              <div style={{ marginTop: "1.5rem" }}>
+                <h4 style={{ fontSize: "0.9rem", marginBottom: "0.8rem" }}>Content Blocks</h4>
+                <div style={{ display: "grid", gap: "0.8rem" }}>
+                  {editFields.contentBlocks?.map((block, idx) => (
+                    <div key={idx} style={{ display: "flex", gap: "0.5rem" }}>
+                      <textarea
+                        className="form-input"
+                        style={{ minHeight: "80px" }}
+                        value={block.text}
+                        onChange={e => {
+                          const newBlocks = [...editFields.contentBlocks];
+                          newBlocks[idx].text = e.target.value;
+                          setEditFields({ ...editFields, contentBlocks: newBlocks });
+                        }}
+                        required
+                      />
+                      <button type="button" className="btn-outline btn-sm" style={{ color: "var(--danger)" }} onClick={() => {
+                        const newBlocks = editFields.contentBlocks.filter((_, i) => i !== idx);
+                        setEditFields({ ...editFields, contentBlocks: newBlocks });
+                      }}>
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <button type="button" className="btn-outline btn-sm" style={{ marginTop: "0.8rem", width: "100%" }} onClick={() => setEditFields({ ...editFields, contentBlocks: [...editFields.contentBlocks, { type: "paragraph", text: "" }] })}>
+                  <Plus size={14} /> Add Block
+                </button>
+              </div>
+
+              <div className="form-actions">
+                <button type="button" className="btn-outline" onClick={resetForm}>Cancel</button>
+                <button type="submit" className="btn-primary" disabled={uploading}>
+                  {uploading ? <Loader2 className="animate-spin" size={18} /> : "Save Changes"}
+                </button>
+              </div>
+            </form>
           </div>
-        )}
-      />
+        </div>
+      )}
+
+      <style>{`
+        .modal-overlay {
+          position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0, 0, 0, 0.6); display: flex; align-items: center; justify-content: center;
+          z-index: 1000; padding: 1.5rem;
+        }
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 }

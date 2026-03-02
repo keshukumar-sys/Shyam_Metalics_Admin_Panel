@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
 import DataTable from "../components/DataTable";
+import { Edit, Trash2, Plus, Loader2, Eye, X, Award } from "lucide-react";
+import "../components/css/Form.css";
 
 export default function AwardAdmin() {
   const [category, setCategory] = useState("");
@@ -46,14 +48,13 @@ export default function AwardAdmin() {
   const handleCreate = async (e) => {
     e.preventDefault();
     setMessage("");
-    setUploading(true);
 
     if (!category || !title || !description || !image) {
       setMessage("All fields including image are required.");
-      setUploading(false);
       return;
     }
 
+    setUploading(true);
     const formData = new FormData();
     formData.append("category", category);
     formData.append("title", title);
@@ -78,7 +79,7 @@ export default function AwardAdmin() {
   };
 
   const handleDelete = async (id) => {
-    if (!window.confirm("Delete this award?")) return;
+    if (!window.confirm("Are you sure you want to delete this award?")) return;
     try {
       const res = await fetch(`${API_BASE}/delete`, {
         method: "DELETE",
@@ -129,158 +130,214 @@ export default function AwardAdmin() {
   };
 
   return (
-    <div className="p-6">
-      <h2 className="text-2xl font-bold mb-6">Awards Management</h2>
+    <div>
+      <div className="page-header">
+        <div>
+          <h2>Awards Management</h2>
+          <p className="muted">Manage and showcase company honors and recognitions.</p>
+        </div>
+      </div>
 
-      {/* Edit Form on Top */}
-      {editId && (
-        <div className="mb-6 p-6 border border-gray-300 rounded bg-gray-50 shadow">
-          <h3 className="text-xl font-semibold mb-4">Edit Award</h3>
-          <form onSubmit={handleUpdate} className="grid gap-4 max-w-xl">
-            <label className="flex flex-col">
-              Category
+      <div className="form-card">
+        <div className="form-header">
+          <h3>Add New Award</h3>
+          <p>Fill in the details and upload a .webp image.</p>
+        </div>
+
+        <form onSubmit={handleCreate}>
+          <div className="form-grid">
+            <div className="form-group">
+              <label>Category</label>
               <input
-                className="border border-gray-300 rounded p-2 mt-1"
-                value={editFields.category}
-                onChange={(e) => setEditFields({ ...editFields, category: e.target.value })}
+                type="text"
+                placeholder="e.g. Industry Excellence"
+                value={category}
+                onChange={(e) => setCategory(e.target.value)}
                 required
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col">
-              Title
+            <div className="form-group">
+              <label>Title</label>
               <input
-                className="border border-gray-300 rounded p-2 mt-1"
-                value={editFields.title}
-                onChange={(e) => setEditFields({ ...editFields, title: e.target.value })}
+                type="text"
+                placeholder="Award name"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
                 required
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col">
-              Description
+            <div className="form-group full-width">
+              <label>Description</label>
               <textarea
-                className="border border-gray-300 rounded p-2 mt-1 h-32 resize-none"
-                value={editFields.description}
-                onChange={(e) => setEditFields({ ...editFields, description: e.target.value })}
+                placeholder="Describe the award significance..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
                 required
+                style={{ height: "100px" }}
               />
-            </label>
+            </div>
 
-            <label className="flex flex-col">
-              Image (.webp only)
+            <div className="form-group full-width">
+              <label>Award Image (.webp only)</label>
               <input
                 type="file"
                 accept=".webp"
-                onChange={(e) => handleImageSelect(e, true)}
-                className="mt-1"
+                className="form-input"
+                onChange={handleImageSelect}
+                required
               />
-            </label>
-
-            <div className="flex gap-3">
-              <button
-                type="submit"
-                disabled={uploading}
-                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-              >
-                {uploading ? "Updating..." : "Update Award"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setEditId(null)}
-                className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
-              >
-                Cancel
-              </button>
             </div>
-          </form>
-        </div>
-      )}
+          </div>
 
-      {/* Create Form */}
-      <div className="mb-6 p-6 border border-gray-300 rounded bg-white shadow">
-        <h3 className="text-xl font-semibold mb-4">Add New Award</h3>
-        <form onSubmit={handleCreate} className="grid gap-4 max-w-xl">
-          <label className="flex flex-col">
-            Category
-            <input
-              className="border border-gray-300 rounded p-2 mt-1"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              required
-            />
-          </label>
+          {message && (
+            <div className={`form-msg ${message.includes("successfully") ? "success" : "error"}`}>
+              {message}
+            </div>
+          )}
 
-          <label className="flex flex-col">
-            Title
-            <input
-              className="border border-gray-300 rounded p-2 mt-1"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
-          </label>
-
-          <label className="flex flex-col">
-            Description
-            <textarea
-              className="border border-gray-300 rounded p-2 mt-1 h-32 resize-none"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
-            />
-          </label>
-
-          <label className="flex flex-col">
-            Image (.webp only)
-            <input
-              type="file"
-              accept=".webp"
-              onChange={handleImageSelect}
-              className="mt-1"
-              required
-            />
-          </label>
-
-          <button
-            type="submit"
-            disabled={uploading}
-            className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
-          >
-            {uploading ? "Uploading..." : "Add Award"}
-          </button>
-
-          {message && <p className={`mt-2 ${message.includes("successfully") ? "text-green-600" : "text-red-600"}`}>{message}</p>}
+          <div className="form-actions">
+            <button type="submit" className="btn-primary" disabled={uploading}>
+              {uploading ? (
+                <><Loader2 className="animate-spin" size={18} /> Uploading...</>
+              ) : (
+                <><Plus size={18} /> Add Award</>
+              )}
+            </button>
+          </div>
         </form>
       </div>
 
-      {/* Awards Table */}
-      <h3 className="text-xl font-semibold mb-4">All Awards</h3>
-      <DataTable
-        columns={[
-          { key: "category", label: "Category" },
-          { key: "title", label: "Title" },
-          { key: "description", label: "Description", render: (r) => r.description?.substring(0, 50) + "..." },
-          { key: "image", label: "Image", render: (r) => r.image ? <a href={r.image} target="_blank" className="text-blue-600 underline">View</a> : "-" },
-        ]}
-        data={awards}
-        actions={(row) => (
-          <div className="flex gap-2">
-            <button
-              className="bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700"
-              onClick={() => handleEdit(row)}
-            >
-              Edit
-            </button>
-            <button
-              className="bg-red-600 text-white px-2 py-1 rounded hover:bg-red-700"
-              onClick={() => handleDelete(row._id)}
-            >
-              Delete
-            </button>
+      <section className="card" style={{ padding: "1.5rem", marginTop: "2rem" }}>
+        <div className="form-header" style={{ border: "none", marginBottom: "1rem" }}>
+          <h3>All Awards</h3>
+          <p>Complete list of achievements recorded in the system.</p>
+        </div>
+
+        <DataTable
+          columns={[
+            { key: "category", label: "Category", width: "150px" },
+            { key: "title", label: "Title" },
+            {
+              key: "description",
+              label: "Description",
+              render: (r) => (
+                <span style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>
+                  {r.description?.substring(0, 60)}...
+                </span>
+              )
+            },
+            {
+              key: "image",
+              label: "Image",
+              width: "120px",
+              render: (r) => (
+                r.image ? (
+                  <a href={r.image} target="_blank" rel="noreferrer" className="btn-outline btn-sm">
+                    <Eye size={14} /> View
+                  </a>
+                ) : "-"
+              )
+            },
+          ]}
+          data={awards}
+          actions={(row) => (
+            <div className="dt-actions">
+              <button
+                className="btn-outline btn-sm"
+                style={{ color: "var(--primary)" }}
+                onClick={() => handleEdit(row)}
+                title="Edit"
+              >
+                <Edit size={16} />
+              </button>
+              <button
+                className="btn-outline btn-sm"
+                style={{ color: "var(--danger)" }}
+                onClick={() => handleDelete(row._id)}
+                title="Delete"
+              >
+                <Trash2 size={16} />
+              </button>
+            </div>
+          )}
+        />
+      </section>
+
+      {editId && (
+        <div className="modal-overlay">
+          <div className="form-card" style={{ maxWidth: "600px" }}>
+            <div className="form-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div>
+                <h3>Edit Award</h3>
+                <p>Update information for "{editFields.title}"</p>
+              </div>
+              <button className="btn-outline btn-sm" onClick={() => setEditId(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdate}>
+              <div className="form-grid">
+                <div className="form-group full-width">
+                  <label>Category</label>
+                  <input
+                    value={editFields.category}
+                    onChange={(e) => setEditFields({ ...editFields, category: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group full-width">
+                  <label>Title</label>
+                  <input
+                    value={editFields.title}
+                    onChange={(e) => setEditFields({ ...editFields, title: e.target.value })}
+                    required
+                  />
+                </div>
+                <div className="form-group full-width">
+                  <label>Description</label>
+                  <textarea
+                    value={editFields.description}
+                    onChange={(e) => setEditFields({ ...editFields, description: e.target.value })}
+                    required
+                    style={{ height: "100px" }}
+                  />
+                </div>
+                <div className="form-group full-width">
+                  <label>Update Image (.webp only, optional)</label>
+                  <input
+                    type="file"
+                    accept=".webp"
+                    className="form-input"
+                    onChange={(e) => handleImageSelect(e, true)}
+                  />
+                </div>
+              </div>
+
+              <div className="form-actions">
+                <button type="button" className="btn-outline" onClick={() => setEditId(null)}>Cancel</button>
+                <button type="submit" className="btn-primary" disabled={uploading}>
+                  {uploading ? <Loader2 className="animate-spin" size={18} /> : "Save Changes"}
+                </button>
+              </div>
+            </form>
           </div>
-        )}
-      />
+        </div>
+      )}
+
+      <style>{`
+        .modal-overlay {
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex; align-items: center; justify-content: center;
+          z-index: 1000; padding: 2rem; overflow-y: auto;
+        }
+        .animate-spin { animation: spin 1s linear infinite; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+      `}</style>
     </div>
   );
 }
