@@ -4,7 +4,7 @@ import DataTable from "../components/DataTable";
 import {
   Truck, MapPin, Phone, User, Search,
   Plus, Pencil, Trash2, Loader2, Info,
-  Filter, CheckCircle2, XCircle
+  Filter, CheckCircle2, XCircle, Globe
 } from "lucide-react";
 import "../components/css/Form.css";
 

@@ -3,7 +3,7 @@ import DataTable from "../components/DataTable";
 import { authHeader } from "../auth";
 import { RefreshCw, Plus, Trash2, Eye, Loader2, AlertCircle, Info } from "lucide-react";
 
-const API_BASE = "https://shyam-metalics-backend-kzr8.onrender.com";
+const API_BASE = import.meta.env.VITE_API_BASE || "https://shyam-metalics-backend-kzr8.onrender.com";
 const DEFAULT_LIMIT = parseInt(import.meta.env.VITE_LOGS_LIMIT || "200", 10);
 
 const ActivityLogs = () => {
