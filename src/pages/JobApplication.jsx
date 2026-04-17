@@ -3,8 +3,9 @@ import axios from "axios";
 import DataTable from "../components/DataTable";
 import {
   Search, Eye, Trash2, User, Mail, Phone, Briefcase,
-  Calendar, X, Loader2, FileText, Clock, CheckCircle, XCircle, ChevronLeft, ChevronRight
+  Calendar, X, Loader2, FileText, Clock, CheckCircle, XCircle, ChevronLeft, ChevronRight, Download
 } from "lucide-react";
+import { exportToCSV } from "../utils/csvExport";
 import "../components/css/Form.css";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "http://localhost:3002";
@@ -89,7 +90,26 @@ export default function AdminApplications() {
           <h2>Job Applications</h2>
           <p className="muted">Review and manage candidates applying for various positions.</p>
         </div>
-        <div className="badge primary">{filteredApplications.length} Total Applications</div>
+        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <button 
+            className="btn-primary" 
+            onClick={() => exportToCSV(filteredApplications, "job_applications.csv", [
+              { key: "fullName", label: "Candidate Name" },
+              { key: "email", label: "Email" },
+              { key: "mobile", label: "Mobile" },
+              { key: "jobId.title", label: "Position" },
+              { key: "totalExperience", label: "Experience" },
+              { key: "status", label: "Status" },
+              { key: "adminRemark", label: "Admin Remark" },
+              { key: "resume", label: "Resume Link" },
+              { key: "createdAt", label: "Applied On" },
+            ])}
+            style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+          >
+            <Download size={18} /> Export CSV
+          </button>
+          <div className="badge primary">{filteredApplications.length} Total Applications</div>
+        </div>
       </div>
 
       <div className="card" style={{ marginBottom: "2rem", padding: "1.5rem" }}>

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "axios";
-import { Trash2, Eye, X, Mail, Phone, Globe, MessageSquare, Loader2, AlertCircle } from "lucide-react";
+import { Trash2, Eye, X, Mail, Phone, Globe, MessageSquare, Loader2, AlertCircle, Download } from "lucide-react";
+import { exportToCSV } from "../utils/csvExport";
 import DataTable from "../components/DataTable";
 
 const API_BASE = import.meta.env.VITE_API_BASE || "https://shyam-metalics-backend-kzr8.onrender.com";
@@ -69,6 +70,24 @@ export default function ContactFormInquiries() {
           <h2>Contact Inquiries</h2>
           <p className="muted">Review and manage messages from your website visitors.</p>
         </div>
+        <button 
+          className="btn-primary" 
+          onClick={() => exportToCSV(inquiries, "contact_inquiries.csv", [
+            { key: "fullName", label: "Full Name" },
+            { key: "email", label: "Email" },
+            { key: "phone", label: "Phone" },
+            { key: "companyName", label: "Company" },
+            { key: "industry", label: "Industry" },
+            { key: "classification", label: "Classification" },
+            { key: "country", label: "Country" },
+            { key: "inquiryMessage", label: "Message" },
+            { key: "status", label: "Status" },
+            { key: "createdAt", label: "Date" },
+          ])}
+          style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+        >
+          <Download size={18} /> Export CSV
+        </button>
       </div>
 
       <div className="card" style={{ padding: "1.5rem" }}>
