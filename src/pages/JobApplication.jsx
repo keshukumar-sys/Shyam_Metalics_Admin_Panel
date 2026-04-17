@@ -91,8 +91,8 @@ export default function AdminApplications() {
           <p className="muted">Review and manage candidates applying for various positions.</p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          <button 
-            className="btn-primary" 
+          <button
+            className="btn-primary"
             onClick={() => exportToCSV(filteredApplications, "job_applications.csv", [
               { key: "fullName", label: "Candidate Name" },
               { key: "email", label: "Email" },
